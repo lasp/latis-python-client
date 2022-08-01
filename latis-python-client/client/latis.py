@@ -2,6 +2,8 @@ import numpy
 import pandas as pd
 import requests
 
+import json
+
 class LatisInstance:
 
     def __init__(self, baseUrl='https://lasp.colorado.edu/lisird/latis/', latis3=False):
@@ -16,10 +18,15 @@ class LatisInstance:
 
     def getCatalog(self, searchTerm=None):
         if self.latis3:
-            return None
+            js = requests.get(self.baseUrl).json()
+            dataset = js['dataset']
+            identifiers = numpy.array([k['identifier'] for k in dataset])
+            if searchTerm:
+                return [k for k in identifiers if searchTerm in k]
+            else:
+                return identifiers
         else:
             df = self.formatDataPd(dataset='catalog')
-
             urls = df['accessURL'].to_numpy()
             if searchTerm:
                 return [k for k in urls if searchTerm in k]
@@ -35,7 +42,7 @@ class LatisInstance:
             if getStructureMetadata:
                 suffix = 'dds'
             q = self.query(dataset, suffix)
-            return requests.get(q).content
+            return requests.get(q).text
 
     def query(self, dataset=None, suffix='csv', projection=[], selection=None,
               startTime=None, endTime=None, filterOptions=None):
@@ -61,14 +68,11 @@ class LatisInstance:
     def formatDataPd(self, dataset=None, projection=[], selection=None,
                      startTime=None, endTime=None, filterOptions=None):
 
-        if self.latis3:
-            return None
-        else:
-            q = self.query(dataset, 'csv', projection, selection, startTime,
-                    endTime, filterOptions)
+        q = self.query(dataset, 'csv', projection, selection, startTime,
+                endTime, filterOptions)
 
-            if q is None:
-                return None
-            else:
-                return pd.read_csv(q, parse_dates=[0], index_col=[0])
+        if q is None:
+            return []
+        else:
+            return pd.read_csv(q, parse_dates=[0], index_col=[0])
 

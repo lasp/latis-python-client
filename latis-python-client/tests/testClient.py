@@ -14,31 +14,31 @@ class testConfig:
 
 allConfigs = [
     testConfig('https://lasp.colorado.edu/lisird/latis',
-            False,
-            True,
-            [None, 'satire'],
-            [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
-            [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
-            [{'dataset': 'cls_radio_flux_f8'}]),
+               False,
+               True,
+               [None, 'nrl2'],
+               [{'dataset': 'sorce_tsi_6hr_l3'}],
+               [{'dataset': 'sorce_tsi_6hr_l3'}],
+               [{'dataset': 'sorce_tsi_6hr_l3'}]),
 
     testConfig('https://swp-dev.pdmz.lasp.colorado.edu/space-weather-portal/latis',
-                False,
-                True,
-                [None],
-                [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
-                [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
-                [{'dataset': 'kyoto_dst_index'}]),
+               True,
+               False,
+               [None],
+               [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
+               [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
+               [{'dataset': 'kyoto_dst_index'}]),
 
     testConfig('https://lasp.colorado.edu/lisird/latis',
-                True,
-                False,
-                [None, 'satire'],
-                [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
-                [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
-                [{'dataset': 'cls_radio_flux_f8'}])
+               True,
+               False,
+               [None, 'satire'],
+               [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
+               [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
+               [{'dataset': 'cls_radio_flux_f8'}])
 ]
 
-tc = test.latisTester()
+tc = test.latisTester(verbosity=0)
 
 errorReport = {
     'total': 0,

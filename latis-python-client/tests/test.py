@@ -9,7 +9,7 @@ import latis
 
 class latisTester:
     
-    def __init__(self):
+    def __init__(self, verbosity=0):
         self.errorReport = {
             'total': 0,
             'latis2': 0,
@@ -25,6 +25,7 @@ class latisTester:
         self.latis2Instance = None
         self.latis3Instance = None
 
+        self.verbosity = verbosity
 
     def runTests(self, testConfig=None):
         if not testConfig:
@@ -78,11 +79,11 @@ class latisTester:
                 if testConfig.latis2:
                     self.info('Getting Latis2 Catalog')
                     catalog = self.latis2Instance.getCatalog(element)
-                    if catalog:
+                    if len(catalog):
                         self.info('Got Latis2 Catalog')
                         print(catalog)
                     else:
-                        self.error('Latis2 Catalog returned None!', 'catalog', 'latis2', False)
+                        self.error('Latis2 Catalog returned zero length!', 'catalog', 'latis2', False)
             except Exception as ex:
                 print(ex)
                 self.error('Exception Thrown!', 'catalog', 'latis2', True)
@@ -91,11 +92,11 @@ class latisTester:
                 if testConfig.latis3:
                     self.info('Getting Latis3 Catalog')
                     catalog3 = self.latis3Instance.getCatalog(element)
-                    if catalog3:
+                    if len(catalog3):
                         self.info('Got Latis3 Catalog')
                         print(catalog3)
                     else:
-                        self.error('Latis3 Catalog returned None!', 'catalog', 'latis3', False)
+                        self.error('Latis3 Catalog returned zero length!', 'catalog', 'latis3', False)
             except Exception as ex:
                 print(ex)
                 self.error('Exception Thrown!', 'catalog', 'latis3', True)
@@ -119,18 +120,18 @@ class latisTester:
                 print(ex)
                 self.error('Exception Thrown!', 'query', 'latis2', True)
 
-            try:
-                if testConfig.latis3:
-                    self.info('Creating Latis3 query')
-                    query3 = self.latis3Instance.query(dataset=element['dataset'], selection=element['selection'])
-                    if query3:
-                        self.info('Created Latis3 query')
-                        print(query3)
-                    else:
-                        self.error('Latis3 query returned None!', 'query', 'latis3', False)
-            except Exception as ex:
-                print(ex)
-                self.error('Exception Thrown!', 'query', 'latis3', True)
+            # try:
+            if testConfig.latis3:
+                self.info('Creating Latis3 query')
+                query3 = self.latis3Instance.query(dataset=element['dataset'])
+                if query3:
+                    self.info('Created Latis3 query')
+                    print(query3)
+                else:
+                    self.error('Latis3 query returned None!', 'query', 'latis3', False)
+            # except Exception as ex:
+            #     print(ex)
+            #     self.error('Exception Thrown!', 'query', 'latis3', True)
 
     def formatData(self, testConfig):
         print('--[Format]-----------')
@@ -141,11 +142,11 @@ class latisTester:
                 if testConfig.latis2:
                     self.info('Formatting Latis2 data')
                     data = self.latis2Instance.formatDataPd(dataset=element['dataset'], selection=element['selection'])
-                    if data:
+                    if len(data):
                         self.info('Formatted Latis2 data')
                         print(data)
                     else:
-                        self.error('Formatting Latis2 data returned None!', 'format', 'latis2', False)
+                        self.error('Formatting Latis2 data returned zero length!', 'format', 'latis2', False)
             except Exception as ex:
                 print(ex)
                 self.error('Exception Thrown!', 'format', 'latis2', True)
@@ -153,12 +154,12 @@ class latisTester:
             try:
                 if testConfig.latis3:
                     self.info('Formatting Latis3 data')
-                    data3 = self.latis3Instance.formatDataPd(dataset=element['dataset'], selection=element['selection'])
-                    if data3:
+                    data3 = self.latis3Instance.formatDataPd(dataset=element['dataset'])
+                    if len(data3):
                         self.info('Formatted Latis3 data')
                         print(data3)
                     else:
-                        self.error('Formatting Latis3 data returned None!', 'format', 'latis3', False)
+                        self.error('Formatting Latis3 data returned zero length!', 'format', 'latis3', False)
             except Exception as ex:
                 print(ex)
                 self.error('Exception Thrown!', 'format', 'latis3', True)
@@ -186,7 +187,7 @@ class latisTester:
                 if testConfig.latis3:
                     self.info('Getting Latis3 metadata')
                     metadata3 = self.latis3Instance.metadata(dataset=element['dataset'])
-                    if metadata3:
+                    if len(metadata3):
                         self.info('Got Latis3 metadata')
                         print(metadata3)
                     else:
@@ -196,7 +197,8 @@ class latisTester:
                 self.error('Exception Thrown!', 'metadata', 'latis3', True)
 
     def info(self, msg):
-        print('[INFO]: ' + msg)
+        if self.verbosity == 0:
+            print('[INFO]: ' + msg)
 
     def error(self, msg, errType, latisVersion, isException):
         print('[ERROR]: ' + msg)
