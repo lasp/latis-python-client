@@ -14,7 +14,7 @@ Installation
 
 .. code:: bash
 
-    $ pip3 intall -r requirements.txt
+    pip3 intall -r requirements.txt
 
 Usage
 =====
@@ -58,7 +58,7 @@ Testing
 
 .. code:: bash
 
-    $ python3 latis-python-client/tests/testClient.py
+    python3 latis-python-client/tests/testClient.py
 
 Development
 ===========
@@ -67,5 +67,5 @@ Use flake8 to lint python code.
 
 .. code:: bash
 
-    $ python3 -m flake8 .
+    python3 -m flake8 .
 

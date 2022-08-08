@@ -2,11 +2,12 @@ import numpy
 import pandas as pd
 import requests
 
-import json
 
 class LatisInstance:
 
-    def __init__(self, baseUrl='https://lasp.colorado.edu/lisird/latis/', latis3=False):
+    def __init__(self,
+                 baseUrl='https://lasp.colorado.edu/lisird/latis/',
+                 latis3=False):
         if not baseUrl[-1] == '/':
             baseUrl += '/'
         if latis3:
@@ -64,15 +65,13 @@ class LatisInstance:
             q += "&" + "&".join(filterOptions)
         return q
 
-
     def formatDataPd(self, dataset=None, projection=[], selection=None,
                      startTime=None, endTime=None, filterOptions=None):
 
         q = self.query(dataset, 'csv', projection, selection, startTime,
-                endTime, filterOptions)
+                       endTime, filterOptions)
 
         if q is None:
             return []
         else:
             return pd.read_csv(q, parse_dates=[0], index_col=[0])
-

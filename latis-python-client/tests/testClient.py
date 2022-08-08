@@ -2,6 +2,7 @@ from dataclasses import dataclass
 
 import test
 
+
 @dataclass
 class testConfig:
     baseUrl: str
@@ -12,6 +13,7 @@ class testConfig:
     formats: []
     metadatas: []
 
+
 allConfigs = [
     testConfig('https://lasp.colorado.edu/lisird/latis',
                False,
@@ -21,21 +23,23 @@ allConfigs = [
                [{'dataset': 'sorce_tsi_6hr_l3'}],
                [{'dataset': 'sorce_tsi_6hr_l3'}]),
 
-    testConfig('https://swp-dev.pdmz.lasp.colorado.edu/space-weather-portal/latis',
-               True,
-               False,
-               [None],
-               [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
-               [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
-               [{'dataset': 'kyoto_dst_index'}]),
+    testConfig(
+        'https://swp-dev.pdmz.lasp.colorado.edu/space-weather-portal/latis',
+        True,
+        False,
+        [None],
+        [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
+        [{'dataset': 'kyoto_dst_index', 'selection': 'time>=2022-07-27'}],
+        [{'dataset': 'kyoto_dst_index'}]),
 
-    testConfig('https://lasp.colorado.edu/lisird/latis',
-               True,
-               False,
-               [None, 'satire'],
-               [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
-               [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
-               [{'dataset': 'cls_radio_flux_f8'}])
+    testConfig(
+        'https://lasp.colorado.edu/lisird/latis',
+        True,
+        False,
+        [None, 'satire'],
+        [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
+        [{'dataset': 'cls_radio_flux_f8', 'selection': 'time>=2022-07-27'}],
+        [{'dataset': 'cls_radio_flux_f8'}])
 ]
 
 tc = test.latisTester(verbosity=0)
