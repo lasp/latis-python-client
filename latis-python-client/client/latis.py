@@ -1,77 +1,76 @@
+from dataclasses import dataclass
+
 import numpy
 import pandas as pd
 import requests
 
+@dataclass
+class Config:
+    baseUrl: str
+    latis3: bool
+    dataset: str
+    manualOption: str
 
-class LatisInstance:
+class LatisDataset:
 
-    def __init__(self,
-                 baseUrl='https://lasp.colorado.edu/lisird/latis/',
-                 latis3=False):
-        if not baseUrl[-1] == '/':
-            baseUrl += '/'
-        if latis3:
-            baseUrl += 'dap2/'
-        else:
-            baseUrl += 'dap/'
-        self.baseUrl = baseUrl
-        self.latis3 = latis3
+    def __init__(self, config):
+        self.config = config
+
+        self.__formatBaseUrl()
+        self.__createQuery()
+
+    def getBaseUrl(self):
+        return self.config.baseUrl
+
+    def getQuery(self):
+        return self.query
 
     def getCatalog(self, searchTerm=None):
-        if self.latis3:
-            js = requests.get(self.baseUrl).json()
+        if self.config.latis3:
+            js = requests.get(self.config.baseUrl).json()
             dataset = js['dataset']
-            identifiers = numpy.array([k['identifier'] for k in dataset])
-            if searchTerm:
-                return [k for k in identifiers if searchTerm in k]
-            else:
-                return identifiers
+            self.catalog = numpy.array([k['identifier'] for k in dataset])
         else:
-            df = self.formatDataPd(dataset='catalog')
-            urls = df['accessURL'].to_numpy()
-            if searchTerm:
-                return [k for k in urls if searchTerm in k]
-            else:
-                return urls
+            q = self.config.baseUrl + 'catalog.csv'
+            df = pd.read_csv(q, parse_dates=[0], index_col=[0])
+            self.catalog = df['accessURL'].to_numpy()
 
-    def metadata(self, dataset=None, getStructureMetadata=False):
-        if self.latis3:
-            q = self.query(dataset, 'meta')
-            return pd.read_json(q)
+        if searchTerm:
+            self.catalog = [k for k in self.catalog if searchTerm in k]
+        
+        return self.catalog
+
+    def getMetadata(self, structureData=False):
+        if self.config.latis3:
+            q = self.config.baseUrl + self.config.dataset + '.meta'
+            self.metadata = pd.read_json(q)
+
+            self.structdata = None #FIX LATER
         else:
-            suffix = 'das'
-            if getStructureMetadata:
-                suffix = 'dds'
-            q = self.query(dataset, suffix)
-            return requests.get(q).text
+            q = self.config.baseUrl + self.config.dataset + '.das'
+            self.metadata = requests.get(q).text
+            q = self.config.baseUrl + self.config.dataset + '.dds'
+            self.structdata = requests.get(q).text
 
-    def query(self, dataset=None, suffix='csv', projection=[], selection=None,
-              startTime=None, endTime=None, filterOptions=None):
-
-        if dataset is None:
-            return None
-
-        q = self.baseUrl + dataset + '.' + suffix + '?'
-        if projection:
-            q += ",".join(projection)
-        if selection:
-            q += "&" + selection
+        if structureData:
+            return self.structdata
         else:
-            if startTime:
-                q += "&time>=" + startTime
-            if endTime:
-                q += "&time<=" + endTime
-        if filterOptions:
-            q += "&" + "&".join(filterOptions)
-        return q
+            return self.metadata
 
-    def formatDataPd(self, dataset=None, projection=[], selection=None,
-                     startTime=None, endTime=None, filterOptions=None):
+    def select(self, constraint):
+        q = self.query + constraint
+        r = requests.get(q).text
+        return r
 
-        q = self.query(dataset, 'csv', projection, selection, startTime,
-                       endTime, filterOptions)
-
-        if q is None:
-            return []
+    def __formatBaseUrl(self):
+        if not self.config.baseUrl[-1] == '/':
+            self.config.baseUrl += '/'
+        if self.config.latis3:
+            self.config.baseUrl += 'dap2/'
         else:
-            return pd.read_csv(q, parse_dates=[0], index_col=[0])
+            self.config.baseUrl += 'dap/'
+
+    def __createQuery(self):
+        self.query = self.config.baseUrl + self.config.dataset + '.csv?'
+        if self.config.manualOption:
+            self.query += self.config.manualOption

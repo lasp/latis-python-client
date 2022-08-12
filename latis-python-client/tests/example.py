@@ -8,25 +8,20 @@ sys.path.insert(0, libPath)
 
 import latis
 
-latis2Instance = latis.LatisInstance()
+config = latis.Config(
+    'https://lasp.colorado.edu/lisird/latis',
+    False, 'cls_radio_flux_f8', None)
 
-catalog = latis2Instance.getCatalog()
-filtered_catalog = latis2Instance.getCatalog(searchTerm='satire')
+dataset = latis.LatisDataset(config)
 
-metadata = latis2Instance.metadata(dataset='cls_radio_flux_f8')
-structure_metadata = latis2Instance.metadata(
-    dataset='cls_radio_flux_f8', getStructureMetadata=True)
+# baseUrl = dataset.getBaseUrl()
+# print(baseUrl)
 
-query = latis2Instance.query(dataset='cls_radio_flux_f8',
-                             selection='time>=2022-07-27')
-data = latis2Instance.formatDataPd(dataset='cls_radio_flux_f8',
-                                   selection='time>=2022-07-27')
+# catalog = dataset.getCatalog('timed')
+# print(catalog)
 
-print(catalog)
-print(filtered_catalog)
+# metadata = dataset.getMetadata()
+# print(metadata)
 
-print(metadata)
-print(structure_metadata)
-
-print(query)
-print(data)
+select = dataset.select('&time>=2022-08-11')
+print(select)
