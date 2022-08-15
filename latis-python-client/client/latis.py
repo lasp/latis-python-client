@@ -62,6 +62,10 @@ class LatisDataset:
         r = requests.get(q).text
         return r
 
+    def toDataFrame(self, constraint):
+        q = self.query + constraint
+        return pd.read_csv(q, parse_dates=[0], index_col=[0])
+
     def __formatBaseUrl(self):
         if not self.config.baseUrl[-1] == '/':
             self.config.baseUrl += '/'

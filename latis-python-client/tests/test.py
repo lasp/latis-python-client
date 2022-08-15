@@ -1,6 +1,8 @@
 import os
 import sys
 
+#NOT UP TO DATE WITH latis.py do not use
+
 libPath = os.path.dirname(os.path.realpath(__file__))
 libPath = libPath.replace('/latis-python-client/tests',
                           '/latis-python-client/client')

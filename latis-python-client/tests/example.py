@@ -1,9 +1,17 @@
 import os
 import sys
+import platform
 
 libPath = os.path.dirname(os.path.realpath(__file__))
-libPath = libPath.replace('/latis-python-client/tests',
+if platform.system() == 'Windows':
+    libPath = libPath.replace('\\latis-python-client\\tests',
+                          '\\latis-python-client\\client')
+else:
+    libPath = libPath.replace('/latis-python-client/tests',
                           '/latis-python-client/client')
+
+print(libPath)
+     
 sys.path.insert(0, libPath)
 
 import latis
@@ -23,5 +31,5 @@ dataset = latis.LatisDataset(config)
 # metadata = dataset.getMetadata()
 # print(metadata)
 
-select = dataset.select('&time>=2022-08-11')
+select = dataset.toDataFrame('&time>=2022-08-11')
 print(select)
