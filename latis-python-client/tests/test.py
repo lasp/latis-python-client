@@ -10,7 +10,6 @@ sys.path.insert(0, libPath)
 
 import latis
 
-
 class latisTester:
 
     def __init__(self, verbosity=0):

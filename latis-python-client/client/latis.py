@@ -9,12 +9,15 @@ class Config:
     baseUrl: str
     latis3: bool
     dataset: str
-    manualOption: str
 
 class LatisDataset:
 
     def __init__(self, config):
         self.config = config
+
+        self.projection=[]
+        self.selection=[]
+        self.operation=[]
 
         self.__formatBaseUrl()
         self.__createQuery()
@@ -40,31 +43,31 @@ class LatisDataset:
         
         return self.catalog
 
-    def getMetadata(self, structureData=False):
+    def getMetadata(self):
         if self.config.latis3:
             q = self.config.baseUrl + self.config.dataset + '.meta'
             self.metadata = pd.read_json(q)
-
-            self.structdata = None #FIX LATER
         else:
-            q = self.config.baseUrl + self.config.dataset + '.das'
-            self.metadata = requests.get(q).text
-            q = self.config.baseUrl + self.config.dataset + '.dds'
-            self.structdata = requests.get(q).text
+            q = self.config.baseUrl + self.config.dataset + '.jsond?first()'
+            self.metadata = pd.read_json(q).iloc[1][0]
 
-        if structureData:
-            return self.structdata
-        else:
-            return self.metadata
+        return self.metadata
+        
+    def project(self, projection=[]):
+        self.projection = projection
+        self.__createQuery()
 
-    def select(self, constraint):
-        q = self.query + constraint
-        r = requests.get(q).text
-        return r
+    def select(self, selection=[]):
+        self.selection = selection
+        self.__createQuery()
 
-    def toDataFrame(self, constraint):
-        q = self.query + constraint
-        return pd.read_csv(q, parse_dates=[0], index_col=[0])
+    def operate(self, operation=[]):
+        self.operation = operation
+        self.__createQuery()
+
+    def toDataFrame(self):
+        print(self.query)
+        return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
 
     def __formatBaseUrl(self):
         if not self.config.baseUrl[-1] == '/':
@@ -76,5 +79,13 @@ class LatisDataset:
 
     def __createQuery(self):
         self.query = self.config.baseUrl + self.config.dataset + '.csv?'
-        if self.config.manualOption:
-            self.query += self.config.manualOption
+
+        for p in self.projection:
+            self.query = self.query + p + ','
+        
+        for s in self.selection:
+            self.query = self.query + s + '&'
+
+        for o in self.operation:
+            self.query = self.query + o + '&'
+        

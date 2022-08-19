@@ -18,7 +18,7 @@ import latis
 
 config = latis.Config(
     'https://lasp.colorado.edu/lisird/latis',
-    False, 'cls_radio_flux_f8', None)
+    False, 'cls_radio_flux_f8')
 
 dataset = latis.LatisDataset(config)
 
@@ -28,8 +28,20 @@ dataset = latis.LatisDataset(config)
 # catalog = dataset.getCatalog('timed')
 # print(catalog)
 
-# metadata = dataset.getMetadata()
-# print(metadata)
+metadata = dataset.getMetadata()
+print(metadata)
 
-select = dataset.toDataFrame('&time>=2022-08-11')
-print(select)
+config = latis.Config(
+    'https://lasp.colorado.edu/lisird/latis',
+    True, 'sorce_tsi_6hr_l3')
+
+print("============================")
+dataset = latis.LatisDataset(config)
+
+metadata = dataset.getMetadata()
+print(metadata)
+
+
+# dataset.select(['time>=2022-08-11'])
+# select = dataset.toDataFrame()
+# print(select)
