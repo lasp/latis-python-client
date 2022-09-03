@@ -9,8 +9,6 @@ if platform.system() == 'Windows':
 else:
     libPath = libPath.replace('/latis-python-client/tests',
                           '/latis-python-client/client')
-
-print(libPath)
      
 sys.path.insert(0, libPath)
 
@@ -19,29 +17,17 @@ import latis
 config = latis.Config(
     'https://lasp.colorado.edu/lisird/latis',
     False, 'cls_radio_flux_f8')
-
 dataset = latis.LatisDataset(config)
 
-# baseUrl = dataset.getBaseUrl()
-# print(baseUrl)
-
-# catalog = dataset.getCatalog('timed')
-# print(catalog)
-
-metadata = dataset.getMetadata()
-print(metadata)
+print("============================")
 
 config = latis.Config(
     'https://lasp.colorado.edu/lisird/latis',
     True, 'sorce_tsi_6hr_l3')
-
-print("============================")
 dataset = latis.LatisDataset(config)
-
-metadata = dataset.getMetadata()
-print(metadata)
-
-
-# dataset.select(['time>=2022-08-11'])
-# select = dataset.toDataFrame()
-# print(select)
+dataset.select(['time<2452697'])
+# dataset.getFile('test_file', '.asc')
+c = dataset.getCatalog()
+print(c.search('number'))
+m = dataset.getMetadata()
+print(m.json)
