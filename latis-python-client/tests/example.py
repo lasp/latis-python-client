@@ -1,4 +1,5 @@
 import os
+from select import select
 import sys
 import platform
 
@@ -14,20 +15,50 @@ sys.path.insert(0, libPath)
 
 import latis
 
-config = latis.Config(
-    'https://lasp.colorado.edu/lisird/latis',
-    False, 'cls_radio_flux_f8')
-dataset = latis.LatisDataset(config)
+print('Creating Latis Instance\n')
+# 1 - Create Instance
+instance = latis.LatisInstance(
+    baseUrl = 'https://lasp.colorado.edu/lisird/latis',
+    latis3 = False
+)
 
-print("============================")
+instance3 = latis.LatisInstance(
+    baseUrl = 'https://lasp.colorado.edu/lisird/latis',
+    latis3 = True
+)
 
-config = latis.Config(
-    'https://lasp.colorado.edu/lisird/latis',
-    True, 'sorce_tsi_6hr_l3')
-dataset = latis.LatisDataset(config)
-dataset.select(['time<2452697'])
-# dataset.getFile('test_file', '.asc')
-c = dataset.getCatalog()
-print(c.search('number'))
-m = dataset.getMetadata()
-print(m.json)
+print('\nSearch Catalog\n')
+# 2 - Search Catalog
+# print(instance.catalog.list) # (Full catalog)
+print(instance.catalog.search('cls'))
+print(instance3.catalog.search('sorce'))
+
+print('\nCreating Datasets\n')
+# 3 - Create a dataset objects
+clsRadioFluxF8 = instance.createDataset('cls_radio_flux_f8')
+clsRadioFluxF15 = instance.createDataset('cls_radio_flux_f15')
+sorceMGIndex = instance3.createDataset('sorce_mg_index')
+
+print('\nCreating Queries\n')
+# 4 - Create queries
+queryReturn = clsRadioFluxF8.buildQuery()
+print(clsRadioFluxF15.buildQuery(selection=['time<0']))
+print(queryReturn)
+print(sorceMGIndex.buildQuery(selection=['time<2452705']))
+
+print('\nGet Metadata\n')
+# 5 - Get metadata
+print(clsRadioFluxF15.metadata.json)
+print(clsRadioFluxF8.metadata.json)
+print(sorceMGIndex.metadata.json)
+
+print('\nGet data\n')
+# 6 - Get data
+pandasDF = clsRadioFluxF15.getData()
+print(pandasDF)
+numpy = clsRadioFluxF15.getData('NUMPY')
+# print(numpy)
+# sorceMGIndex.getData('NUMPY') #For some reason filters break this???
+
+# 7 - Get file
+# clsRadioFluxF15.getFile('cls_radio_flux_f15.data')

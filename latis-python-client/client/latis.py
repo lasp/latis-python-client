@@ -4,41 +4,75 @@ import numpy
 import pandas as pd
 import requests
 
-@dataclass
-class Config:
-    baseUrl: str
-    latis3: bool
-    dataset: str
-
 class LatisInstance:
 
-    def __init__(self, config):
-        self.config = config
-
-        self.projection=[]
-        self.selection=[]
-        self.operation=[]
-
-        self.__createDataset(config.dataset)
+    def __init__(self, baseUrl, latis3):
+        self.baseUrl = baseUrl
+        self.latis3 = latis3
         self.__formatBaseUrl()
-        self.__buildQuery()
-        self.__createCatalog()
-        self.__createMetadata()
         
-    def project(self, projection=[]):
-        self.projection = projection
-        self.__buildQuery()
+        self.catalog = self.__createCatalog()
 
-    def select(self, selection=[]):
-        self.selection = selection
-        self.__buildQuery()
+    def createDataset(self, name):
+        return Dataset(self, name)    
 
-    def operate(self, operation=[]):
-        self.operation = operation
-        self.__buildQuery()
+    def __formatBaseUrl(self):
+        if not self.baseUrl[-1] == '/':
+            self.baseUrl += '/'
+        if self.latis3:
+            self.baseUrl += 'dap2/'
+        else:
+            self.baseUrl += 'dap/'
 
-    def getData(self, type):
+    def __createCatalog(self):
+        return Catalog(self)
+
+class Catalog:
+    
+    def __init__(self, latisInstance):
+
+        if latisInstance.latis3:
+            js = requests.get(latisInstance.baseUrl).json()
+            dataset = js['dataset']
+            self.list = numpy.array([k['identifier'] for k in dataset])
+        else:
+            q = latisInstance.baseUrl + 'catalog.csv'
+            print(q)
+            df = pd.read_csv(q, parse_dates=[0], index_col=[0])
+            self.list = df['accessURL'].to_numpy()
+
+    def search(self, searchTerm):
+        if searchTerm:
+            return [k for k in self.list if searchTerm in k]
+        else:
+            return self.list
+
+class Dataset:
+
+    def __init__(self, latisInstance, name):
+        self.latisInstance = latisInstance
+        self.name = name
+        self.query = None
+
+        self.metadata = Metadata(latisInstance, self)
+
+    def buildQuery(self, projection=[], selection=[], operation=[]):
+        self.query = self.latisInstance.baseUrl + self.name + '.csv?'
+
+        for p in projection:
+            self.query = self.query + p + ','
+        
+        for s in selection:
+            self.query = self.query + s + '&'
+
+        for o in operation:
+            self.query = self.query + o + '&'
+
+        return self.query
+
+    def getData(self, type='PANDAS'):
         if type == 'PANDAS':
+            print(self.query)
             return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
         elif type == 'NUMPY':
             return pd.read_csv(self.query, parse_dates=[0], index_col=[0]).to_numpy()
@@ -51,80 +85,12 @@ class LatisInstance:
             f = open(filename, 'w')
             f.write(csv)
 
-    def getBaseUrl(self):
-        return self.config.baseUrl
-
-    def getQuery(self):
-        return self.query
-
-    def getCatalog(self, searchTerm=None):
-        return self.catalog
-
-    def getMetadata(self):
-        return self.metadata
-
-    def __formatBaseUrl(self):
-        if not self.config.baseUrl[-1] == '/':
-            self.config.baseUrl += '/'
-        if self.config.latis3:
-            self.config.baseUrl += 'dap2/'
-        else:
-            self.config.baseUrl += 'dap/'
-
-    def __buildQuery(self):
-        self.query = self.config.baseUrl + self.dataset.name + '.csv?'
-
-        for p in self.projection:
-            self.query = self.query + p + ','
-        
-        for s in self.selection:
-            self.query = self.query + s + '&'
-
-        for o in self.operation:
-            self.query = self.query + o + '&'
-        
-    def __createDataset(self, dataset):
-        self.dataset = Dataset(dataset)
-
-    def __createCatalog(self):
-        self.catalog = Catalog(self)
-
-    def __createMetadata(self):
-        self.metadata = Metadata(self)
-
-class Catalog:
-    
-    def __init__(self, latisInstance):
-
-        if latisInstance.config.latis3:
-            js = requests.get(latisInstance.config.baseUrl).json()
-            dataset = js['dataset']
-            self.catalogList = numpy.array([k['identifier'] for k in dataset])
-        else:
-            q = latisInstance.config.baseUrl + 'catalog.csv'
-            df = pd.read_csv(q, parse_dates=[0], index_col=[0])
-            self.catalogList = df['accessURL'].to_numpy()
-
-    def search(self, searchTerm):
-        if searchTerm:
-            return [k for k in self.catalogList if searchTerm in k]
-        else:
-            return self.catalogList
-
 class Metadata:
 
-    def __init__(self, latisInstance):
-        if latisInstance.config.latis3:
-            q = latisInstance.config.baseUrl + latisInstance.dataset.name + '.meta'
+    def __init__(self, latisInstance, dataset):
+        if latisInstance.latis3:
+            q = latisInstance.baseUrl + dataset.name + '.meta'
             self.json = pd.read_json(q)
         else:
-            q = latisInstance.config.baseUrl + latisInstance.dataset.name + '.jsond?first()'
+            q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
             self.json = pd.read_json(q).iloc[1][0]
-
-class Dataset:
-
-    def __init__(self, name):
-        self.name = name
-
-    def selectDataset(self, name):
-        self.name = name
