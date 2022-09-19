@@ -3,6 +3,7 @@ from dataclasses import dataclass
 import numpy
 import pandas as pd
 import requests
+import urllib.parse
 
 class LatisInstance:
 
@@ -31,15 +32,23 @@ class Catalog:
     
     def __init__(self, latisInstance):
 
+        self.catalog = {}
+
         if latisInstance.latis3:
             js = requests.get(latisInstance.baseUrl).json()
             dataset = js['dataset']
+            titles = numpy.array([k['title'] for k in dataset])
             self.list = numpy.array([k['identifier'] for k in dataset])
+            for i in range(len(self.list)):
+                self.catalog[titles[i]] = self.list[i]
         else:
             q = latisInstance.baseUrl + 'catalog.csv'
-            print(q)
-            df = pd.read_csv(q, parse_dates=[0], index_col=[0])
+            df = pd.read_csv(q)
+            names = df['name']
             self.list = df['accessURL'].to_numpy()
+            for i in range(len(self.list)):
+                self.catalog[names[i]] = self.list[i]
+
 
     def search(self, searchTerm):
         if searchTerm:
@@ -60,19 +69,18 @@ class Dataset:
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
         for p in projection:
-            self.query = self.query + p + ','
+            self.query = self.query + urllib.parse.quote(p) + ','
         
         for s in selection:
-            self.query = self.query + s + '&'
+            self.query = self.query + urllib.parse.quote(s) + '&'
 
         for o in operation:
-            self.query = self.query + o + '&'
+            self.query = self.query + urllib.parse.quote(o) + '&'
 
         return self.query
 
     def getData(self, type='PANDAS'):
         if type == 'PANDAS':
-            print(self.query)
             return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
         elif type == 'NUMPY':
             return pd.read_csv(self.query, parse_dates=[0], index_col=[0]).to_numpy()
@@ -88,9 +96,16 @@ class Dataset:
 class Metadata:
 
     def __init__(self, latisInstance, dataset):
+
+        self.metadata = {}
+
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
-            self.json = pd.read_json(q)
+            print(q)
+            variables = pd.read_json(q)['variable']
+            for i in range(len(variables)):
+                self.metadata[variables[i]['id']] = variables[i]
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.json = pd.read_json(q).iloc[1][0]
+            self.metadata = pd.read_json(q).iloc[1][0]
+            

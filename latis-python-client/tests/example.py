@@ -32,6 +32,8 @@ print('\nSearch Catalog\n')
 # print(instance.catalog.list) # (Full catalog)
 print(instance.catalog.search('cls'))
 print(instance3.catalog.search('sorce'))
+print(instance.catalog.catalog)
+print(instance3.catalog.catalog)
 
 print('\nCreating Datasets\n')
 # 3 - Create a dataset objects
@@ -48,17 +50,18 @@ print(sorceMGIndex.buildQuery(selection=['time<2452705']))
 
 print('\nGet Metadata\n')
 # 5 - Get metadata
-print(clsRadioFluxF15.metadata.json)
-print(clsRadioFluxF8.metadata.json)
-print(sorceMGIndex.metadata.json)
+print(clsRadioFluxF15.metadata.metadata)
+print(clsRadioFluxF8.metadata.metadata)
+print(sorceMGIndex.metadata.metadata)
 
 print('\nGet data\n')
 # 6 - Get data
 pandasDF = clsRadioFluxF15.getData()
 print(pandasDF)
 numpy = clsRadioFluxF15.getData('NUMPY')
-# print(numpy)
-# sorceMGIndex.getData('NUMPY') #For some reason filters break this???
+print(numpy)
+mgData = sorceMGIndex.getData('NUMPY')
+print(mgData)
 
 # 7 - Get file
 # clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
