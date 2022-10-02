@@ -19,46 +19,86 @@ Installation
 Usage
 =====
 
-Create new latis instance. Arguments ``baseUrl='https://lasp.colorado.edu/lisird/latis/', latis3=False``
+Create new latis instance.
 
 .. code:: python
 
     import latis
 
-    latis2Instance = latis.LatisInstance()
+    instance = latis.LatisInstance(
+         baseUrl='https://lasp.colorado.edu/lisird/latis',
+         latis3=False)
 
-Get catalog of datasets. Arguments ``searchTerm=None``
+    instance3 = latis.LatisInstance(
+         baseUrl='https://lasp.colorado.edu/lisird/latis',
+         latis3=True)
 
-.. code:: python
-
-    catalog = latis2Instance.getCatalog()
-    filtered_catalog = latis2Instance.getCatalog(searchTerm='satire')
-
-Get metadata. Arguments ``dataset=None, getStructureMetadata=False``
-
-.. code:: python
-
-    metadata = latis2Instance.metadata(dataset='cls_radio_flux_f8')
-    structure_metadata = latis2Instance.metadata(dataset='cls_radio_flux_f8', getStructureMetadata=True)
-
-Get query. Arguments ``dataset=None, suffix='csv', projection=[], selection=None, startTime=None, endTime=None, filterOptions=None``
+Get catalog.
 
 .. code:: python
 
-    query = latis2Instance.query(dataset='cls_radio_flux_f8', selection='time>=2022-07-27')
-
-Format data to pandas. Arguments ``dataset=None, projection=[], selection=None, startTime=None, endTime=None, filterOptions=None``
+    instance.catalog.search('cls')
     
-.. code:: python
+    instance3.catalog.search('sorce')
     
-    data = latis2Instance.formatDataPd(dataset='cls_radio_flux_f8', selection='time>=2022-07-27')
+    instance.catalog.catalog
+    
+    instance3.catalog.catalog
+
+Create datasets.
+
+.. code:: python
+
+    clsRadioFluxF8 = instance.createDataset('cls_radio_flux_f8')
+    
+    clsRadioFluxF15 = instance.createDataset('cls_radio_flux_f15')
+    
+    sorceMGIndex = instance3.createDataset('sorce_mg_index')
+    
+Create Queries.
+
+.. code:: python
+
+    clsRadioFluxF8.buildQuery()
+     
+    clsRadioFluxF15.buildQuery(selection=['time<0'])
+     
+    sorceMGIndex.buildQuery(selection=['time<2452705'])
+
+Get Metadata.
+
+.. code:: python
+
+    clsRadioFluxF15.metadata.metadata
+    
+    clsRadioFluxF8.metadata.metadata
+    
+    sorceMGIndex.metadata.metadata
+
+Get Data.
+
+.. code:: python
+
+    pandasDF = clsRadioFluxF15.getData()
+
+    numpy = clsRadioFluxF15.getData('NUMPY')
+
+    mgData = sorceMGIndex.getData('NUMPY')
+
+Get File.
+
+.. code:: python
+
+    clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
 Testing
 =======
 
+(Currently temporary until test code is rewritten)
+
 .. code:: bash
 
-    python3 latis-python-client/tests/testClient.py
+    python3 latis-python-client/tests/example.py
 
 Development
 ===========
