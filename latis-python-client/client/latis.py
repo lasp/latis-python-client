@@ -1,9 +1,8 @@
-from dataclasses import dataclass
-
 import numpy
 import pandas as pd
 import requests
 import urllib.parse
+
 
 class LatisInstance:
 
@@ -11,11 +10,11 @@ class LatisInstance:
         self.baseUrl = baseUrl
         self.latis3 = latis3
         self.__formatBaseUrl()
-        
+
         self.catalog = self.__createCatalog()
 
     def createDataset(self, name):
-        return Dataset(self, name)    
+        return Dataset(self, name)
 
     def __formatBaseUrl(self):
         if not self.baseUrl[-1] == '/':
@@ -28,8 +27,9 @@ class LatisInstance:
     def __createCatalog(self):
         return Catalog(self)
 
+
 class Catalog:
-    
+
     def __init__(self, latisInstance):
 
         self.catalog = {}
@@ -49,12 +49,12 @@ class Catalog:
             for i in range(len(self.list)):
                 self.catalog[names[i]] = self.list[i]
 
-
     def search(self, searchTerm):
         if searchTerm:
             return [k for k in self.list if searchTerm in k]
         else:
             return self.list
+
 
 class Dataset:
 
@@ -70,7 +70,7 @@ class Dataset:
 
         for p in projection:
             self.query = self.query + urllib.parse.quote(p) + ','
-        
+
         for s in selection:
             self.query = self.query + urllib.parse.quote(s) + '&'
 
@@ -83,15 +83,17 @@ class Dataset:
         if type == 'PANDAS':
             return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
         elif type == 'NUMPY':
-            return pd.read_csv(self.query, parse_dates=[0], index_col=[0]).to_numpy()
+            return pd.read_csv(self.query, parse_dates=[0],
+                               index_col=[0]).to_numpy()
         else:
             return None
-    
+
     def getFile(self, filename, suffix='.csv'):
-        if not filename == None:
+        if filename is not None:
             csv = requests.get(self.query.replace('.csv', suffix)).text
             f = open(filename, 'w')
             f.write(csv)
+
 
 class Metadata:
 
@@ -108,4 +110,3 @@ class Metadata:
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
             self.metadata = pd.read_json(q).iloc[1][0]
-            

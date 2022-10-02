@@ -1,16 +1,15 @@
 import os
-from select import select
 import sys
 import platform
 
 libPath = os.path.dirname(os.path.realpath(__file__))
 if platform.system() == 'Windows':
     libPath = libPath.replace('\\latis-python-client\\tests',
-                          '\\latis-python-client\\client')
+                              '\\latis-python-client\\client')
 else:
     libPath = libPath.replace('/latis-python-client/tests',
-                          '/latis-python-client/client')
-     
+                              '/latis-python-client/client')
+
 sys.path.insert(0, libPath)
 
 import latis
@@ -18,14 +17,12 @@ import latis
 print('Creating Latis Instance\n')
 # 1 - Create Instance
 instance = latis.LatisInstance(
-    baseUrl = 'https://lasp.colorado.edu/lisird/latis',
-    latis3 = False
-)
+    baseUrl='https://lasp.colorado.edu/lisird/latis',
+    latis3=False)
 
 instance3 = latis.LatisInstance(
-    baseUrl = 'https://lasp.colorado.edu/lisird/latis',
-    latis3 = True
-)
+    baseUrl='https://lasp.colorado.edu/lisird/latis',
+    latis3=True)
 
 print('\nSearch Catalog\n')
 # 2 - Search Catalog
