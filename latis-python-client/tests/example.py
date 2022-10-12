@@ -29,8 +29,8 @@ print('\nSearch Catalog\n')
 # print(instance.catalog.list) # (Full catalog)
 print(instance.catalog.search('cls'))
 print(instance3.catalog.search('sorce'))
-print(instance.catalog.catalog)
-print(instance3.catalog.catalog)
+print(instance.catalog.datasets)
+print(instance3.catalog.datasets)
 
 print('\nCreating Datasets\n')
 # 3 - Create a dataset objects
@@ -47,18 +47,19 @@ print(sorceMGIndex.buildQuery(selection=['time<2452705']))
 
 print('\nGet Metadata\n')
 # 5 - Get metadata
-print(clsRadioFluxF15.metadata.metadata)
-print(clsRadioFluxF8.metadata.metadata)
-print(sorceMGIndex.metadata.metadata)
+print(clsRadioFluxF15.metadata.properties)
+print(clsRadioFluxF8.metadata.properties)
+print(sorceMGIndex.metadata.properties)
 
 print('\nGet data\n')
 # 6 - Get data
-pandasDF = clsRadioFluxF15.getData()
+pandasDF = clsRadioFluxF15.asNumpy()
 print(pandasDF)
-numpy = clsRadioFluxF15.getData('NUMPY')
+numpy = clsRadioFluxF15.asNumpy()
 print(numpy)
-mgData = sorceMGIndex.getData('NUMPY')
+mgData = sorceMGIndex.asPandas()
 print(mgData)
 
 # 7 - Get file
+# clsRadioFluxF15.getFile('cls_radio_flux_f15')
 # clsRadioFluxF15.getFile('cls_radio_flux_f15.data')

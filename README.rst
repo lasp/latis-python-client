@@ -14,7 +14,7 @@ Installation
 
 .. code:: bash
 
-    pip3 intall -r requirements.txt
+    pip3 install -r requirements.txt
 
 Usage
 =====

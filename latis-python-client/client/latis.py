@@ -32,7 +32,7 @@ class Catalog:
 
     def __init__(self, latisInstance):
 
-        self.catalog = {}
+        self.datasets = {}
 
         if latisInstance.latis3:
             js = requests.get(latisInstance.baseUrl).json()
@@ -40,14 +40,14 @@ class Catalog:
             titles = numpy.array([k['title'] for k in dataset])
             self.list = numpy.array([k['identifier'] for k in dataset])
             for i in range(len(self.list)):
-                self.catalog[titles[i]] = self.list[i]
+                self.datasets[titles[i]] = self.list[i]
         else:
             q = latisInstance.baseUrl + 'catalog.csv'
             df = pd.read_csv(q)
             names = df['name']
             self.list = df['accessURL'].to_numpy()
             for i in range(len(self.list)):
-                self.catalog[names[i]] = self.list[i]
+                self.datasets[names[i]] = self.list[i]
 
     def search(self, searchTerm):
         if searchTerm:
@@ -64,6 +64,7 @@ class Dataset:
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
+        self.buildQuery()
 
     def buildQuery(self, projection=[], selection=[], operation=[]):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
@@ -79,19 +80,19 @@ class Dataset:
 
         return self.query
 
-    def getData(self, type='PANDAS'):
-        if type == 'PANDAS':
-            return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
-        elif type == 'NUMPY':
-            return pd.read_csv(self.query, parse_dates=[0],
+    def asPandas(self):
+        return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
+    
+    def asNumpy(self):
+        return pd.read_csv(self.query, parse_dates=[0],
                                index_col=[0]).to_numpy()
-        else:
-            return None
 
-    def getFile(self, filename, suffix='.csv'):
+    def getFile(self, filename, format='csv'):
+        suffix = '.' + format
         if filename is not None:
-            csv = requests.get(self.query.replace('.csv', suffix)).text
-            f = open(filename, 'w')
+            csv = requests.get(self.query.replace('.csv', format)).text
+            trueFilename = filename + format if '.' not in filename else filename
+            f = open(trueFilename, 'w')
             f.write(csv)
 
 
@@ -99,14 +100,14 @@ class Metadata:
 
     def __init__(self, latisInstance, dataset):
 
-        self.metadata = {}
+        self.properties = {}
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
             print(q)
             variables = pd.read_json(q)['variable']
             for i in range(len(variables)):
-                self.metadata[variables[i]['id']] = variables[i]
+                self.properties[variables[i]['id']] = variables[i]
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.metadata = pd.read_json(q).iloc[1][0]
+            self.properties = pd.read_json(q).iloc[1][0]
