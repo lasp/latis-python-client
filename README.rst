@@ -45,7 +45,7 @@ Get catalog.
     
     instance3.catalog.datasets
 
-Create datasets.
+Get datasets.
 
 .. code:: python
 
