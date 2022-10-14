@@ -32,8 +32,8 @@ print(instance3.catalog.search('sorce'))
 print(instance.catalog.datasets)
 print(instance3.catalog.datasets)
 
-print('\nCreating Datasets\n')
-# 3 - Create a dataset objects
+print('\Getting Datasets\n')
+# 3 - Get dataset objects
 clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
 clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
 sorceMGIndex = instance3.getDataset('sorce_mg_index')

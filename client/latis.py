@@ -24,7 +24,7 @@ class LatisInstance:
         else:
             self.baseUrl += 'dap/'
 
-    def __createCatalog(self):
+    def __getCatalog(self):
         return Catalog(self)
 
 
