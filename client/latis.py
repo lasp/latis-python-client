@@ -11,7 +11,7 @@ class LatisInstance:
         self.latis3 = latis3
         self.__formatBaseUrl()
 
-        self.catalog = self.__createCatalog()
+        self.catalog = self.__getCatalog()
 
     def getDataset(self, name):
         return Dataset(self, name)
