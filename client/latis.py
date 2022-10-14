@@ -13,7 +13,7 @@ class LatisInstance:
 
         self.catalog = self.__createCatalog()
 
-    def createDataset(self, name):
+    def getDataset(self, name):
         return Dataset(self, name)
 
     def __formatBaseUrl(self):

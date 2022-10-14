@@ -34,9 +34,9 @@ print(instance3.catalog.datasets)
 
 print('\nCreating Datasets\n')
 # 3 - Create a dataset objects
-clsRadioFluxF8 = instance.createDataset('cls_radio_flux_f8')
-clsRadioFluxF15 = instance.createDataset('cls_radio_flux_f15')
-sorceMGIndex = instance3.createDataset('sorce_mg_index')
+clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
+clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
+sorceMGIndex = instance3.getDataset('sorce_mg_index')
 
 print('\nCreating Queries\n')
 # 4 - Create queries
