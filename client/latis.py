@@ -89,10 +89,12 @@ class Dataset:
 
     def getFile(self, filename, format='csv'):
         suffix = '.' + format
+        if '.' not in filename:
+            filename += suffix
+
         if filename is not None:
-            csv = requests.get(self.query.replace('.csv', format)).text
-            trueFilename = filename + format if '.' not in filename else filename
-            f = open(trueFilename, 'w')
+            csv = requests.get(self.query.replace('.csv', suffix)).text
+            f = open(filename, 'w')
             f.write(csv)
 
 

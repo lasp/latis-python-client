@@ -62,4 +62,5 @@ print(mgData)
 
 # 7 - Get file
 # clsRadioFluxF15.getFile('cls_radio_flux_f15')
+# clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
 # clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
