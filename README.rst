@@ -41,25 +41,25 @@ Get catalog.
     
     instance3.catalog.search('sorce')
     
-    instance.catalog.catalog
+    instance.catalog.datasets
     
-    instance3.catalog.catalog
+    instance3.catalog.datasets
 
 Create datasets.
 
 .. code:: python
 
-    clsRadioFluxF8 = instance.createDataset('cls_radio_flux_f8')
+    clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
     
-    clsRadioFluxF15 = instance.createDataset('cls_radio_flux_f15')
+    clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
     
-    sorceMGIndex = instance3.createDataset('sorce_mg_index')
+    sorceMGIndex = instance3.getDataset('sorce_mg_index')
     
 Create Queries.
 
 .. code:: python
 
-    clsRadioFluxF8.buildQuery()
+    clsRadioFluxF8.buildQuery() # default query on dataset init
      
     clsRadioFluxF15.buildQuery(selection=['time<0'])
      
@@ -69,27 +69,29 @@ Get Metadata.
 
 .. code:: python
 
-    clsRadioFluxF15.metadata.metadata
+    clsRadioFluxF15.metadata.properties
     
-    clsRadioFluxF8.metadata.metadata
+    clsRadioFluxF8.metadata.properties
     
-    sorceMGIndex.metadata.metadata
+    sorceMGIndex.metadata.properties
 
 Get Data.
 
 .. code:: python
 
-    pandasDF = clsRadioFluxF15.getData()
+    pandasDF = clsRadioFluxF15.asNumpy()
 
-    numpy = clsRadioFluxF15.getData('NUMPY')
+    numpy = clsRadioFluxF15.asNumpy()
 
-    mgData = sorceMGIndex.getData('NUMPY')
+    mgData = sorceMGIndex.asPandas()
 
 Get File.
 
 .. code:: python
 
-    clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15') # Creates csv format file with .csv suffix
+    clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt') # Creates txt format file with .txt suffix
+    clsRadioFluxF15.getFile('cls_radio_flux_f15.data') # Creates csv format file with .data suffix
 
 Testing
 =======
