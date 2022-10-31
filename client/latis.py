@@ -4,6 +4,22 @@ import requests
 import urllib.parse
 
 
+def readNumpyLatis(baseUrl, latis3, dataset,
+                   projection=[], selection=[], operation=[]):
+    instance = LatisInstance(baseUrl, latis3)
+    dsObj = instance.getDataset(dataset)
+    dsObj.buildQuery(projection, selection, operation)
+    return dsObj.asNumpy()
+
+
+def readPandasLatis(baseUrl, latis3, dataset,
+                    projection=[], selection=[], operation=[]):
+    instance = LatisInstance(baseUrl, latis3)
+    dsObj = instance.getDataset(dataset)
+    dsObj.buildQuery(projection, selection, operation)
+    return dsObj.asPandas()
+
+
 class LatisInstance:
 
     def __init__(self, baseUrl, latis3):
@@ -82,10 +98,10 @@ class Dataset:
 
     def asPandas(self):
         return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
-    
+
     def asNumpy(self):
         return pd.read_csv(self.query, parse_dates=[0],
-                               index_col=[0]).to_numpy()
+                           index_col=[0]).to_numpy()
 
     def getFile(self, filename, format='csv'):
         suffix = '.' + format
@@ -106,7 +122,6 @@ class Metadata:
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
-            print(q)
             variables = pd.read_json(q)['variable']
             for i in range(len(variables)):
                 self.properties[variables[i]['id']] = variables[i]
