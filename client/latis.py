@@ -85,12 +85,15 @@ class Dataset:
 
     def project(self, projection):
         self.projection = projection
+        self.buildQuery()
 
     def select(self, selection):
         self.selection = selection
+        self.buildQuery()
 
     def operate(self, operation):
         self.operation = operation
+        self.buildQuery()
 
     def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
