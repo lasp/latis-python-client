@@ -18,27 +18,27 @@ import latis
 def testShortcuts():
 
     print("Latis2 Numpy")
-    testLatis2Np = latis.readNumpyLatis(
+    testLatis2Np = latis.data(
         'https://lasp.colorado.edu/lisird/latis', False,
-        'cls_radio_flux_f8', selection=['time<0'])
+        'cls_radio_flux_f8', 'NUMPY', selection=['time<0'])
     print(testLatis2Np)
 
     print("Latis2 Pandas")
-    testLatis2Pd = latis.readNumpyLatis(
+    testLatis2Pd = latis.data(
         'https://lasp.colorado.edu/lisird/latis', False,
-        'cls_radio_flux_f8', selection=['time<0'])
+        'cls_radio_flux_f8', 'PANDAS', selection=['time<0'])
     print(testLatis2Pd)
 
     print("Latis3 Numpy")
-    testLatis3Np = latis.readNumpyLatis(
+    testLatis3Np = latis.data(
         'https://lasp.colorado.edu/lisird/latis', True,
-        'sorce_mg_index', selection=['time<2452705'])
+        'sorce_mg_index', 'NUMPY', selection=['time<2452705'])
     print(testLatis3Np)
 
     print("Latis3 Pandas")
-    testLatis3Pd = latis.readNumpyLatis(
+    testLatis3Pd = latis.data(
         'https://lasp.colorado.edu/lisird/latis', True,
-        'sorce_mg_index', selection=['time<2452705'])
+        'sorce_mg_index', 'PANDAS', selection=['time<2452705'])
     print(testLatis3Pd)
 
 def testCore():
@@ -69,9 +69,9 @@ def testCore():
     print('\nCreating Queries\n')
     # 4 - Create queries
     queryReturn = clsRadioFluxF8.buildQuery()
-    print(clsRadioFluxF15.buildQuery(selection=['time<0']))
+    print(clsRadioFluxF15.select(['time<0']))
     print(queryReturn)
-    print(sorceMGIndex.buildQuery(selection=['time<2452705']))
+    print(sorceMGIndex.select(['time<2452705']))
 
     print('\nGet Metadata\n')
     # 5 - Get metadata

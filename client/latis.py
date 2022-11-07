@@ -4,21 +4,19 @@ import requests
 import urllib.parse
 
 
-def readNumpyLatis(baseUrl, latis3, dataset,
-                   projection=[], selection=[], operation=[]):
+def data(baseUrl, latis3, dataset, returnType,
+          projection=[], selection=[], operation=[]):
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset)
-    dsObj.buildQuery(projection, selection, operation)
-    return dsObj.asNumpy()
-
-
-def readPandasLatis(baseUrl, latis3, dataset,
-                    projection=[], selection=[], operation=[]):
-    instance = LatisInstance(baseUrl, latis3)
-    dsObj = instance.getDataset(dataset)
-    dsObj.buildQuery(projection, selection, operation)
-    return dsObj.asPandas()
-
+    dsObj.project(projection)
+    dsObj.select(selection)
+    dsObj.operate(operation)
+    if returnType == 'NUMPY':
+        return dsObj.asNumpy()
+    elif returnType == 'PANDAS':
+        return dsObj.asPandas()
+    else:
+        return None
 
 class LatisInstance:
 
@@ -77,21 +75,33 @@ class Dataset:
     def __init__(self, latisInstance, name):
         self.latisInstance = latisInstance
         self.name = name
+        self.selection = []
+        self.projection = []
+        self.operation = []
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def buildQuery(self, projection=[], selection=[], operation=[]):
+    def project(self, projection):
+        self.projection = projection
+
+    def select(self, selection):
+        self.selection = selection
+
+    def operate(self, operation):
+        self.operation = operation
+
+    def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
-        for p in projection:
+        for p in self.projection:
             self.query = self.query + urllib.parse.quote(p) + ','
 
-        for s in selection:
+        for s in self.selection:
             self.query = self.query + urllib.parse.quote(s) + '&'
 
-        for o in operation:
+        for o in self.operation:
             self.query = self.query + urllib.parse.quote(o) + '&'
 
         return self.query
