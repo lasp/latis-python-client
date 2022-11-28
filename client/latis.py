@@ -4,13 +4,11 @@ import requests
 import urllib.parse
 
 
-def data(baseUrl, latis3, dataset, returnType,
-          projection=[], selection=[], operation=[]):
+def data(baseUrl, latis3, dataset, returnType, operations=[]):
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset)
-    dsObj.project(projection)
-    dsObj.select(selection)
-    dsObj.operate(operation)
+    for o in operations:
+        dsObj.operate(o)
     if returnType == 'NUMPY':
         return dsObj.asNumpy()
     elif returnType == 'PANDAS':
@@ -75,34 +73,19 @@ class Dataset:
     def __init__(self, latisInstance, name):
         self.latisInstance = latisInstance
         self.name = name
-        self.selection = []
-        self.projection = []
         self.operation = []
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def project(self, projection):
-        self.projection = projection
-        self.buildQuery()
-
-    def select(self, selection):
-        self.selection = selection
-        self.buildQuery()
-
     def operate(self, operation):
-        self.operation = operation
+        self.operation.append(operation)
         self.buildQuery()
+        return self
 
     def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
-
-        for p in self.projection:
-            self.query = self.query + urllib.parse.quote(p) + ','
-
-        for s in self.selection:
-            self.query = self.query + urllib.parse.quote(s) + '&'
 
         for o in self.operation:
             self.query = self.query + urllib.parse.quote(o) + '&'
