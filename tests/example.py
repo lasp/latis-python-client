@@ -17,6 +17,10 @@ import latis
 
 def testShortcuts():
 
+    # latis.download(
+    #     'https://lasp.colorado.edu/lisird/latis', False,
+    #     'cls_radio_flux_f8', 'testing', 'csv', operations=['time<0'])
+
     print("Latis2 Numpy")
     testLatis2Np = latis.data(
         'https://lasp.colorado.edu/lisird/latis', False,

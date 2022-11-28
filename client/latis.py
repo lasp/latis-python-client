@@ -16,6 +16,13 @@ def data(baseUrl, latis3, dataset, returnType, operations=[]):
     else:
         return None
 
+def download(baseUrl, latis3, dataset, filename, fileFormat, operations=[]):
+    instance = LatisInstance(baseUrl, latis3)
+    dsObj = instance.getDataset(dataset)
+    for o in operations:
+        dsObj.operate(o)
+    dsObj.getFile(filename, fileFormat)
+  
 class LatisInstance:
 
     def __init__(self, baseUrl, latis3):
