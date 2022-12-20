@@ -80,21 +80,21 @@ class Dataset:
     def __init__(self, latisInstance, name):
         self.latisInstance = latisInstance
         self.name = name
-        self.operation = []
+        self.operations = []
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
     def operate(self, operation):
-        self.operation.append(operation)
+        self.operations.append(operation)
         self.buildQuery()
         return self
 
     def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
-        for o in self.operation:
+        for o in self.operations:
             self.query = self.query + urllib.parse.quote(o) + '&'
 
         return self.query
