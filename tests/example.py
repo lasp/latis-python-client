@@ -89,7 +89,7 @@ def testCore():
 
     print('\nGet data\n')
     # 6 - Get data
-    pandasDF = clsRadioFluxF15.asNumpy()
+    pandasDF = clsRadioFluxF15.asPandas()
     print(pandasDF)
     numpy = clsRadioFluxF15.asNumpy()
     print(numpy)
