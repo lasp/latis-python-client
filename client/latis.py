@@ -4,6 +4,25 @@ import requests
 import urllib.parse
 
 
+def data(baseUrl, latis3, dataset, returnType, operations=[]):
+    instance = LatisInstance(baseUrl, latis3)
+    dsObj = instance.getDataset(dataset)
+    for o in operations:
+        dsObj.operate(o)
+    if returnType == 'NUMPY':
+        return dsObj.asNumpy()
+    elif returnType == 'PANDAS':
+        return dsObj.asPandas()
+    else:
+        return None
+
+def download(baseUrl, latis3, dataset, filename, fileFormat, operations=[]):
+    instance = LatisInstance(baseUrl, latis3)
+    dsObj = instance.getDataset(dataset)
+    for o in operations:
+        dsObj.operate(o)
+    dsObj.getFile(filename, fileFormat)
+  
 class LatisInstance:
 
     def __init__(self, baseUrl, latis3):
@@ -61,31 +80,31 @@ class Dataset:
     def __init__(self, latisInstance, name):
         self.latisInstance = latisInstance
         self.name = name
+        self.operations = []
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def buildQuery(self, projection=[], selection=[], operation=[]):
+    def operate(self, operation):
+        self.operations.append(operation)
+        self.buildQuery()
+        return self
+
+    def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
-        for p in projection:
-            self.query = self.query + urllib.parse.quote(p) + ','
-
-        for s in selection:
-            self.query = self.query + urllib.parse.quote(s) + '&'
-
-        for o in operation:
+        for o in self.operations:
             self.query = self.query + urllib.parse.quote(o) + '&'
 
         return self.query
 
     def asPandas(self):
         return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
-    
+
     def asNumpy(self):
         return pd.read_csv(self.query, parse_dates=[0],
-                               index_col=[0]).to_numpy()
+                           index_col=[0]).to_numpy()
 
     def getFile(self, filename, format='csv'):
         suffix = '.' + format
@@ -106,7 +125,6 @@ class Metadata:
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
-            print(q)
             variables = pd.read_json(q)['variable']
             for i in range(len(variables)):
                 self.properties[variables[i]['id']] = variables[i]
