@@ -24,7 +24,7 @@ def testShortcuts():
     print("Latis2 Numpy")
     testLatis2Np = latis.data(
         'https://lasp.colorado.edu/lisird/latis',
-        'cls_radio_flux_f8', 'NUMPY', operations=['time<0'], preferVersion2=False)
+        'cls_radio_flux_f8', 'NUMPY', operations=['time<0'], preferVersion2=False) # Will auto switch to latis 2
     print(testLatis2Np)
 
     print("Latis2 Pandas")
@@ -42,7 +42,7 @@ def testShortcuts():
     print("Latis3 Pandas")
     testLatis3Pd = latis.data(
         'https://lasp.colorado.edu/lisird/latis',
-        'sorce_mg_index', 'PANDAS', operations=['time<2452705'], preferVersion2=True)
+        'sorce_mg_index', 'PANDAS', operations=['time<2452705'], preferVersion2=True) # Dataset also exists on latis 2. Will not auto switch.
     print(testLatis3Pd)
 
 def testCore():
