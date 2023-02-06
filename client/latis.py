@@ -4,7 +4,7 @@ import requests
 import urllib.parse
     
 
-def __datasetCanUseVersion(baseUrl, dataset, preferVersion2):
+def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
     if preferVersion2:
         try:
             instanceV2 = LatisInstance(baseUrl, False)
@@ -28,7 +28,7 @@ def __datasetCanUseVersion(baseUrl, dataset, preferVersion2):
 
 
 def data(baseUrl, dataset, returnType, operations=[], preferVersion2=False):
-    latis3 = __datasetCanUseVersion(baseUrl, dataset, preferVersion2)
+    latis3 = __datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset)
     for o in operations:
@@ -41,7 +41,7 @@ def data(baseUrl, dataset, returnType, operations=[], preferVersion2=False):
         return None
 
 def download(baseUrl, dataset, filename, fileFormat, operations=[], preferVersion2=False):
-    latis3 = __datasetCanUseVersion(preferVersion2)
+    latis3 = __datasetWillUseVersion3(preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset)
     for o in operations:
