@@ -86,7 +86,20 @@ class Dataset:
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def operate(self, operation):
+    def select(self, target, start="0", end="", inclusive=True):
+        # startBound = ">" if inclusive else ">="
+        # endBound = "<" if inclusive else "<="
+        
+        # operation = target + startBound + start
+        # self.__operate(operation)
+
+        # if len(end):
+        #     operation = target + endBound + endBound
+        #     self.__operate(operation)
+
+        return self
+
+    def __operate(self, operation):
         self.operations.append(operation)
         self.buildQuery()
         return self
