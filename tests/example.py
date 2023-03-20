@@ -73,9 +73,9 @@ def testCore():
 
     print('\nCreating Queries\n')
     # 4 - Create queries
-    clsRadioFluxF15.operate('time<0')
-    sorceMGIndex.operate('time<2452705')
-    clsRadioFluxF107.operate('time,absolute_f107').operate('time<1952').operate('formatTime(yyyy.MM.dd)')
+    clsRadioFluxF15.addOperation('time<0')
+    sorceMGIndex.addOperation('time<2452705')
+    clsRadioFluxF107.project(['time,absolute_f107']).select(rangeStart='1953', rangeEnd='1954').select(target='absolute_f107', rangeEnd='70').addOperation('formatTime(yyyy.MM.dd)')
 
     print(clsRadioFluxF8.buildQuery())
     print(clsRadioFluxF15.buildQuery())
@@ -97,11 +97,11 @@ def testCore():
     print(mgData)
 
     # 7 - Get file
-    # clsRadioFluxF15.getFile('cls_radio_flux_f15')
-    # clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
-    # clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
 testShortcuts()
-#testCore()
+testCore()
 
 #https://lasp.colorado.edu/lisird/latis/dap/cls_radio_flux_absolute_f107.asc?time,absolute_f107&time<1952&formatTime(yyyy.MM.dd)

@@ -8,7 +8,7 @@ def data(baseUrl, latis3, dataset, returnType, operations=[]):
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset)
     for o in operations:
-        dsObj.operate(o)
+        dsObj.addOperation(o)
     if returnType == 'NUMPY':
         return dsObj.asNumpy()
     elif returnType == 'PANDAS':
@@ -20,7 +20,7 @@ def download(baseUrl, latis3, dataset, filename, fileFormat, operations=[]):
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset)
     for o in operations:
-        dsObj.operate(o)
+        dsObj.addOperation(o)
     dsObj.getFile(filename, fileFormat)
   
 class LatisInstance:
@@ -86,22 +86,27 @@ class Dataset:
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def select(self, target, start="0", end="", inclusive=True):
-        # startBound = ">" if inclusive else ">="
-        # endBound = "<" if inclusive else "<="
+    def select(self, target="time", rangeStart="", rangeEnd="", inclusive=True):
         
-        # operation = target + startBound + start
-        # self.__operate(operation)
+        if len(rangeStart):
+            startBound = ">" if inclusive else ">="
+            operation = target + startBound + rangeStart
+            self.addOperation(operation)
 
-        # if len(end):
-        #     operation = target + endBound + endBound
-        #     self.__operate(operation)
+        if len(rangeEnd):
+            endBound = "<" if inclusive else "<="
+            operation = target + endBound + rangeEnd
+            self.addOperation(operation)
 
         return self
 
-    def __operate(self, operation):
+    def project(self, projectionList):
+        for var in projectionList:
+            self.addOperation(var)
+        return self
+
+    def addOperation(self, operation):
         self.operations.append(operation)
-        self.buildQuery()
         return self
 
     def buildQuery(self):
@@ -113,13 +118,16 @@ class Dataset:
         return self.query
 
     def asPandas(self):
+        self.buildQuery()
         return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
 
     def asNumpy(self):
+        self.buildQuery()
         return pd.read_csv(self.query, parse_dates=[0],
                            index_col=[0]).to_numpy()
 
     def getFile(self, filename, format='csv'):
+        self.buildQuery()
         suffix = '.' + format
         if '.' not in filename:
             filename += suffix
