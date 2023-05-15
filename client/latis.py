@@ -4,11 +4,10 @@ import requests
 import urllib.parse
 
 
-def data(baseUrl, latis3, dataset, returnType, operations=[]):
+def data(baseUrl, latis3, dataset, returnType, projections=[], selections=[], operations=[]):
     instance = LatisInstance(baseUrl, latis3)
-    dsObj = instance.getDataset(dataset)
-    for o in operations:
-        dsObj.addOperation(o)
+    dsObj = instance.getDataset(dataset, projections, selections, operations)
+
     if returnType == 'NUMPY':
         return dsObj.asNumpy()
     elif returnType == 'PANDAS':
@@ -16,11 +15,9 @@ def data(baseUrl, latis3, dataset, returnType, operations=[]):
     else:
         return None
 
-def download(baseUrl, latis3, dataset, filename, fileFormat, operations=[]):
+def download(baseUrl, latis3, dataset, filename, fileFormat, projections, selections, operations):
     instance = LatisInstance(baseUrl, latis3)
-    dsObj = instance.getDataset(dataset)
-    for o in operations:
-        dsObj.addOperation(o)
+    dsObj = instance.getDataset(dataset, projections, selections, operations)
     dsObj.getFile(filename, fileFormat)
   
 class LatisInstance:
@@ -32,8 +29,8 @@ class LatisInstance:
 
         self.catalog = self.__getCatalog()
 
-    def getDataset(self, name):
-        return Dataset(self, name)
+    def getDataset(self, name, projections=[], selections=[], operations=[]):
+        return Dataset(self, name, projections, selections, operations)
 
     def __formatBaseUrl(self):
         if not self.baseUrl[-1] == '/':
@@ -77,43 +74,56 @@ class Catalog:
 
 class Dataset:
 
-    def __init__(self, latisInstance, name):
+    def __init__(self, latisInstance, name, projections=[], selections=[], operations=[]):
         self.latisInstance = latisInstance
         self.name = name
-        self.operations = []
+        self.projections = list(projections)
+        self.selections = list(selections)
+        self.operations = list(operations)
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def select(self, target="time", rangeStart="", rangeEnd="", inclusive=True):
+    def select(self, target="time", start="", end="", inclusive=True):
         
-        if len(rangeStart):
+        if start:
             startBound = ">" if inclusive else ">="
-            operation = target + startBound + rangeStart
-            self.addOperation(operation)
+            select = target + startBound + start
+            self.selections.append(select)
 
-        if len(rangeEnd):
+        if end:
             endBound = "<" if inclusive else "<="
-            operation = target + endBound + rangeEnd
-            self.addOperation(operation)
+            select = target + endBound + end
+            self.selections.append(select)
 
         return self
 
     def project(self, projectionList):
-        for var in projectionList:
-            self.addOperation(var)
+        for p in projectionList:
+            self.projections.append(p)
         return self
 
-    def addOperation(self, operation):
+    def operate(self, operation):
         self.operations.append(operation)
         return self
 
     def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
+        for i in range(len(self.projections)):
+            p = self.projections[i]
+            self.query = self.query + urllib.parse.quote(p)
+            if not i == len(self.projections) - 1:
+                self.query = self.query + ','
+
+        for s in self.selections:
+            self.query = self.query + '&' + urllib.parse.quote(s)
+
         for o in self.operations:
-            self.query = self.query + urllib.parse.quote(o) + '&'
+            self.query = self.query + '&' + urllib.parse.quote(o)
+
+        print(self.query)
 
         return self.query
 
