@@ -89,12 +89,12 @@ class Dataset:
         
         if start:
             startBound = ">" if inclusive else ">="
-            select = target + startBound + start
+            select = target + startBound + str(start)
             self.selections.append(select)
 
         if end:
             endBound = "<" if inclusive else "<="
-            select = target + endBound + end
+            select = target + endBound + str(end)
             self.selections.append(select)
 
         return self
@@ -123,18 +123,15 @@ class Dataset:
         for o in self.operations:
             self.query = self.query + '&' + urllib.parse.quote(o)
 
-        print(self.query)
-
         return self.query
 
     def asPandas(self):
         self.buildQuery()
-        return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
+        return pd.read_csv(self.query)
 
     def asNumpy(self):
         self.buildQuery()
-        return pd.read_csv(self.query, parse_dates=[0],
-                           index_col=[0]).to_numpy()
+        return pd.read_csv(self.query).to_numpy()
 
     def getFile(self, filename, format='csv'):
         self.buildQuery()
@@ -146,6 +143,15 @@ class Dataset:
             csv = requests.get(self.query.replace('.csv', suffix)).text
             f = open(filename, 'w')
             f.write(csv)
+
+    def clearProjections(self):
+        self.projections = []
+
+    def clearSelections(self):
+        self.selections = []
+
+    def clearOperations(self):
+        self.operations = []
 
 
 class Metadata:
