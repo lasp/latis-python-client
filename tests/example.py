@@ -75,8 +75,8 @@ def testCore():
     # 4 - Create queries
     clsRadioFluxF15.select('time<0')
     sorceMGIndex.select('time<2452705')
-    # clsRadioFluxF107.project(['time,absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
-    clsRadioFluxF107.project(['time,absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
+    clsRadioFluxF107.project(['time','absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
+    # clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
 
     print(clsRadioFluxF8.buildQuery())
     print(clsRadioFluxF15.buildQuery())
@@ -98,7 +98,7 @@ def testCore():
 
     pandasDF = clsRadioFluxF15.asPandas()
     print(pandasDF)
-    numpy = clsRadioFluxF15.asNumpy()
+    numpy = clsRadioFluxF107.asNumpy()
     print(numpy)
     mgData = sorceMGIndex.asPandas()
     print(mgData)

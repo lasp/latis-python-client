@@ -17,8 +17,8 @@ import latis
 
 import random
 
-def testBaseUrl(baseUrl, latis3, seed, maxDatasets=None):
-    # random.seed(seed)
+def testRandomBaseUrl(baseUrl, latis3, seed, maxDatasets=None):
+    random.seed(seed)
 
     instance = latis.LatisInstance(
         baseUrl=baseUrl,
@@ -54,20 +54,25 @@ def testDataset(dsObj):
     metadata_keys = list(metadata.keys())
 
     if metadata_keys:
-        projections.append(metadata_keys[0])
-        if len(metadata_keys) == 2:
-            projections.append(metadata_keys[1])
-        else:
-            projections.append(metadata_keys[random.randrange(1, len(metadata_keys) - 1)])
 
-        dsObj.project(projections).select(metadata_keys[0], start='0', end='1')
+        if metadata_keys[0] == 'time':
 
-        print(dsObj.name, dsObj.projections, dsObj.selections, dsObj.operations, dsObj.buildQuery())
+            projections.append(metadata_keys[0])
+            if len(metadata_keys) == 2:
+                projections.append(metadata_keys[1])
+            else:
+                projections.append(metadata_keys[random.randrange(1, len(metadata_keys) - 1)])
 
-    # numpyData = dsObj.asNumpy()
+            # dsObj.operate('formatTime(yyyy.MM.dd)').project(projections).select(metadata_keys[0], start='0')
 
-    # if len(numpyData) > 1:
-    #     print(numpyData[0], numpyData[1])
+            dsObj.operate('formatTime(yyyy.MM.dd)').select(metadata_keys[0], start='0').project(projections)
 
-testBaseUrl('https://lasp.colorado.edu/lisird/latis', False, 324234)
-# testBaseUrl('https://lasp.colorado.edu/lisird/latis', True, 324234, maxDatasets=10)
+            print(dsObj.name)
+            print(dsObj.projections, dsObj.selections, dsObj.operations)
+            print(dsObj.buildQuery())
+
+            numpyData = dsObj.asNumpy()
+            print(numpyData)
+
+testRandomBaseUrl('https://lasp.colorado.edu/lisird/latis', False, 23423, maxDatasets=4)
+testRandomBaseUrl('https://lasp.colorado.edu/lisird/latis', True, 23423, maxDatasets=4)
