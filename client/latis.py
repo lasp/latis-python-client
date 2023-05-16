@@ -2,9 +2,33 @@ import numpy
 import pandas as pd
 import requests
 import urllib.parse
+    
+
+def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
+    if preferVersion2:
+        try:
+            instanceV2 = LatisInstance(baseUrl, False)
+            dsObj = instanceV2.getDataset(dataset)
+            
+            return False
+        except:
+            print("[WARN]: " + dataset + " cannot be accessed through Latis version 2. Auto switching to version 3.")
+
+            return True
+    else:
+        try:
+            instanceV3 = LatisInstance(baseUrl, True)
+            dsObj = instanceV3.getDataset(dataset)
+
+            return True
+        except:
+            print("[WARN]: " + dataset + " cannot be accessed through Latis version 3. Auto switching to version 2.")
+
+            return False
 
 
-def data(baseUrl, latis3, dataset, returnType, projections=[], selections=[], operations=[]):
+def data(baseUrl, dataset, returnType, projections=[], selections=[], operations=[], preferVersion2=False):
+    latis3 = __datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
 
@@ -15,7 +39,8 @@ def data(baseUrl, latis3, dataset, returnType, projections=[], selections=[], op
     else:
         return None
 
-def download(baseUrl, latis3, dataset, filename, fileFormat, projections, selections, operations):
+def download(baseUrl, dataset, filename, fileFormat, projections, selections, operations, preferVersion2=False):
+    latis3 = __datasetWillUseVersion3(preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
     dsObj.getFile(filename, fileFormat)
