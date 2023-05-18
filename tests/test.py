@@ -1,6 +1,7 @@
 import os
 import sys
 import platform
+import random
 
 libPath = os.path.dirname(os.path.realpath(__file__))
 
@@ -15,7 +16,6 @@ sys.path.insert(0, libPath)
 
 import latis
 
-import random
 
 def testRandomBaseUrl(baseUrl, latis3, seed, maxDatasets=None):
     random.seed(seed)
@@ -23,7 +23,7 @@ def testRandomBaseUrl(baseUrl, latis3, seed, maxDatasets=None):
     instance = latis.LatisInstance(
         baseUrl=baseUrl,
         latis3=latis3)
-    
+
     datasets = list(instance.catalog.datasets.values())
 
     if maxDatasets:
@@ -35,16 +35,17 @@ def testRandomBaseUrl(baseUrl, latis3, seed, maxDatasets=None):
                 index = random.randrange(0, len(datasets) - 1)
             picks.append(index)
             dataset_picks.append(datasets[index])
-        
+
         datasets = dataset_picks
 
     for d in datasets:
         try:
             dsObj = instance.getDataset(d)
             testDataset(dsObj)
-        except:
+        except Exception:
             print("Failed to test or get a dataset.")
             pass
+
 
 def testDataset(dsObj):
     metadata = dsObj.metadata.properties
@@ -74,5 +75,10 @@ def testDataset(dsObj):
             numpyData = dsObj.asNumpy()
             print(numpyData)
 
-testRandomBaseUrl('https://lasp.colorado.edu/lisird/latis', False, 23423, maxDatasets=4)
-testRandomBaseUrl('https://lasp.colorado.edu/lisird/latis', True, 23423, maxDatasets=4)
+
+testRandomBaseUrl('https://lasp.colorado.edu/lisird/latis',
+                  False, 23423, maxDatasets=4)
+
+
+testRandomBaseUrl('https://lasp.colorado.edu/lisird/latis',
+                  True, 23423, maxDatasets=4)

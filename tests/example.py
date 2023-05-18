@@ -15,6 +15,7 @@ sys.path.insert(0, libPath)
 
 import latis
 
+
 def testShortcuts():
 
     # latis.download(
@@ -24,13 +25,16 @@ def testShortcuts():
     print("Latis2 Numpy")
     testLatis2Np = latis.data(
         'https://lasp.colorado.edu/lisird/latis',
-        'cls_radio_flux_f8', 'NUMPY', operations=['time<0'], preferVersion2=False) # Will auto switch to latis 2
+        'cls_radio_flux_f8', 'NUMPY', operations=['time<0'],
+        preferVersion2=False)
+    # Will auto switch to latis 2
     print(testLatis2Np)
 
     print("Latis2 Pandas")
     testLatis2Pd = latis.data(
         'https://lasp.colorado.edu/lisird/latis',
-        'cls_radio_flux_f8', 'PANDAS', operations=['time<0'], preferVersion2=True)
+        'cls_radio_flux_f8', 'PANDAS', operations=['time<0'],
+        preferVersion2=True)
     print(testLatis2Pd)
 
     print("Latis3 Numpy")
@@ -42,8 +46,11 @@ def testShortcuts():
     print("Latis3 Pandas")
     testLatis3Pd = latis.data(
         'https://lasp.colorado.edu/lisird/latis',
-        'sorce_mg_index', 'PANDAS', operations=['time<2452705'], preferVersion2=True) # Dataset also exists on latis 2. Will not auto switch.
+        'sorce_mg_index', 'PANDAS', operations=['time<2452705'],
+        preferVersion2=True)
+    # Dataset also exists on latis 2. Will not auto switch.
     print(testLatis3Pd)
+
 
 def testCore():
     print('Creating Latis Instance\n')
@@ -64,7 +71,7 @@ def testCore():
     print(instance.catalog.datasets)
     print(instance3.catalog.datasets)
 
-    print('\Getting Datasets\n')
+    print('\nGetting Datasets\n')
     # 3 - Get dataset objects
     clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
     clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
@@ -75,7 +82,7 @@ def testCore():
     # 4 - Create queries
     clsRadioFluxF15.select('time<0')
     sorceMGIndex.select('time<2452705')
-    clsRadioFluxF107.project(['time','absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
+    clsRadioFluxF107.project(['time', 'absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
     # clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
 
     print(clsRadioFluxF8.buildQuery())
@@ -91,10 +98,14 @@ def testCore():
     print('\nGet data\n')
     # 6 - Get data
 
-    print("clsRadioFluxF15:", clsRadioFluxF15.projections, clsRadioFluxF15.selections, clsRadioFluxF15.operations)
-    print("clsRadioFluxF8:", clsRadioFluxF8.projections, clsRadioFluxF8.selections, clsRadioFluxF8.operations)
-    print("clsRadioFluxF107:", clsRadioFluxF107.projections, clsRadioFluxF107.selections, clsRadioFluxF107.operations)
-    print("sorceMGIndex:", sorceMGIndex.projections, sorceMGIndex.selections, sorceMGIndex.operations)
+    print("clsRadioFluxF15:", clsRadioFluxF15.projections,
+          clsRadioFluxF15.selections, clsRadioFluxF15.operations)
+    print("clsRadioFluxF8:", clsRadioFluxF8.projections,
+          clsRadioFluxF8.selections, clsRadioFluxF8.operations)
+    print("clsRadioFluxF107:", clsRadioFluxF107.projections,
+          clsRadioFluxF107.selections, clsRadioFluxF107.operations)
+    print("sorceMGIndex:", sorceMGIndex.projections,
+          sorceMGIndex.selections, sorceMGIndex.operations)
 
     pandasDF = clsRadioFluxF15.asPandas()
     print(pandasDF)
@@ -108,7 +119,6 @@ def testCore():
     clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
     clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
-# testShortcuts()
-testCore()
 
-#https://lasp.colorado.edu/lisird/latis/dap/cls_radio_flux_absolute_f107.asc?time,absolute_f107&time<1952&formatTime(yyyy.MM.dd)
+testShortcuts()
+testCore()
