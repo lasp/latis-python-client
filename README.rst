@@ -55,15 +55,21 @@ Get datasets.
     
     sorceMGIndex = instance3.getDataset('sorce_mg_index')
     
-Create Queries.
+Add selections/projections/operations.
 
 .. code:: python
 
-    clsRadioFluxF8.buildQuery() # default query on dataset init
-     
-    clsRadioFluxF15.buildQuery(selection=['time<0'])
-     
-    sorceMGIndex.buildQuery(selection=['time<2452705'])
+    clsRadioFluxF15.select('time<0')
+    
+    sorceMGIndex.select('time<2452705')
+    
+    clsRadioFluxF107.project(['time', 'absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
+
+Order of additions does not matter:
+
+.. code:: python
+
+    clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
 
 Get Metadata.
 
@@ -90,7 +96,9 @@ Get File.
 .. code:: python
 
     clsRadioFluxF15.getFile('cls_radio_flux_f15') # Creates csv format file with .csv suffix
+    
     clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt') # Creates txt format file with .txt suffix
+    
     clsRadioFluxF15.getFile('cls_radio_flux_f15.data') # Creates csv format file with .data suffix
 
 Testing
