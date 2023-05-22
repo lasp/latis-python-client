@@ -6,10 +6,10 @@ libPath = os.path.dirname(os.path.realpath(__file__))
 
 if platform.system() == 'Windows':
     libPath = libPath.replace('\\tests',
-                              '\\client')
+                              '\\src\\latis-python-client')
 else:
     libPath = libPath.replace('/tests',
-                              '/client')
+                              '/src/latis-python-client')
 
 sys.path.insert(0, libPath)
 
