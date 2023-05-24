@@ -33,19 +33,38 @@ def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
 
 def data(baseUrl, dataset, returnType,
          projections=[], selections=[], operations=[], preferVersion2=False):
-    """Shortcut function that directly returns data without requiring the creation of a LatisInstance object, or Dataset object
+    """Shortcut function that directly returns data.
+    
+    This does not require the user to create a LatisInstance object, or Dataset object.
+    Additionally, a latis version will be auto selected based on avaiablilty and prefrence.
+    The data format can either be a Numpy array or Pandas dataframe.
 
     Args:
-        baseUrl (String): Stores the latis base url
-        dataset (Dataset): Dataset object
-        returnType (String): Specify numpy or pandas data format
-        projections (list, optional): stores list of projections for latis query. Defaults to [].
-        selections (list, optional): stores list of selections for latis query. Defaults to [].
-        operations (list, optional): stores list of operations for latis query. Defaults to [].
-        preferVersion2 (bool, optional): Prefer latis version 2. If not avaiable will auto switch. Defaults to False.
+        baseUrl (str): 
+            Latis base url (ex: 'https://lasp.colorado.edu/lisird/latis').
+        dataset (str): 
+            Latis dataset name (ex: 'cls_radio_flux_f8').
+        returnType (str): 
+            Specify numpy or pandas data format ('NUMPY' or 'PANDAS').
+        projections (list, optional): 
+            Stores list of projections for latis query. Each projection must be a list. Defaults to [].
+        selections (list, optional): 
+            Stores list of selections for latis query. Defaults to [].
+        operations (list, optional): 
+            Stores list of operations for latis query. Defaults to [].
+        preferVersion2 (bool, optional): 
+            Prefer latis version 2. If not avaiable will auto switch. Defaults to False.
 
     Returns:
-        _type_: Numpy or Pandas data
+        Return type depends on returnType value
+
+        A returnType of 'NUMPY' will yeild:
+            numpy.ndarray: Numpy data
+
+        A returnType of 'PANDAS' will yeild:
+            pandas.core.frame.DataFrame: Pandas data
+
+        Anything else will return None.
     """
     latis3 = __datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
@@ -61,22 +80,36 @@ def data(baseUrl, dataset, returnType,
 
 def download(baseUrl, dataset, filename, fileFormat,
              projections=[], selections=[], operations=[], preferVersion2=False):
-    """Shortcut function to download data to a file without requiring the creation of a LatisInstance object, or Dataset object
+    """Shortcut function to download data to a file.
+    
+    This does not require the user to create a LatisInstance object, or Dataset object.
+    Additionally, a latis version will be auto selected based on avaiablilty and prefrence.
+    The file format may be selected.
 
     Args:
-        baseUrl (String): _description_
-        dataset (Dataset): _description_
-        filename (String): _description_
-        fileFormat (String): _description_
-        projections (list, optional): stores list of projections for latis query. Defaults to [].
-        selections (list, optional): stores list of selections for latis query. Defaults to [].
-        operations (list, optional): stores list of operations for latis query. Defaults to [].
-        preferVersion2 (bool, optional): Prefer latis version 2. If not avaiable will auto switch. Defaults to False.
+        baseUrl (str):
+            Latis base url (ex: 'https://lasp.colorado.edu/lisird/latis').
+        dataset (str):
+            Latis dataset name (ex: 'cls_radio_flux_f8').
+        filename (str):
+            Name of file downloaded.
+        fileFormat (str):
+            File format (ex: 'csv')
+        projections (list, optional):
+            Stores list of projections for latis query. Each projection must be a list. Defaults to [].
+        selections (list, optional):
+            Stores list of selections for latis query. Defaults to [].
+        operations (list, optional):
+            Stores list of operations for latis query. Defaults to [].
+        preferVersion2 (bool, optional):
+            Prefer latis version 2. If not avaiable will auto switch. Defaults to False.
     """
     latis3 = __datasetWillUseVersion3(preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
     dsObj.getFile(filename, fileFormat)
+
+    print(type(baseUrl), type(dataset), type(filename), type(fileFormat), type(projections), type(selections), type(operations), type(preferVersion2))
 
 
 class LatisInstance:
@@ -84,14 +117,21 @@ class LatisInstance:
     """
 
     def __init__(self, baseUrl, latis3):
-        """Init LatisInstance Object
+        """Init LatisInstance Object.
+
+        Sets class baseUrl, latis3 parameters.
+        Formats baseUrl (use dap vs dap2).
+        Creates catalog object from LatisInstance.
 
         Args:
-            baseUrl (String): Latis base url.
-            latis3 (Bool): Select latis version 3 (True) usage or latis version 2 (False).
+            baseUrl (str): 
+                Latis base url (ex: 'https://lasp.colorado.edu/lisird/latis').
+            latis3 (bool): 
+                Select latis version 3 (True) or latis version 2 (False).
         """
         self.baseUrl = baseUrl
         self.latis3 = latis3
+        print(type(self.baseUrl), type(self.latis3))
         self.__formatBaseUrl()
 
         self.catalog = self.__getCatalog()
@@ -217,15 +257,36 @@ class Dataset:
         return self
 
     def project(self, projectionList):
+        """Adds a projection list to query projection list
+
+        Args:
+            projectionList (list): _description_
+
+        Returns:
+            _type_: _description_
+        """
         for p in projectionList:
             self.projections.append(p)
         return self
 
     def operate(self, operation):
+        """Adds operation to query operation list
+
+        Args:
+            operation (String): _description_
+
+        Returns:
+            _type_: _description_
+        """
         self.operations.append(operation)
         return self
 
     def buildQuery(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
         for i in range(len(self.projections)):
@@ -243,14 +304,30 @@ class Dataset:
         return self.query
 
     def asPandas(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         self.buildQuery()
         return pd.read_csv(self.query)
 
     def asNumpy(self):
+        """_summary_
+
+        Returns:
+            _type_: _description_
+        """
         self.buildQuery()
         return pd.read_csv(self.query).to_numpy()
 
     def getFile(self, filename, format='csv'):
+        """_summary_
+
+        Args:
+            filename (_type_): _description_
+            format (str, optional): _description_. Defaults to 'csv'.
+        """
         self.buildQuery()
         suffix = '.' + format
         if '.' not in filename:
@@ -262,19 +339,32 @@ class Dataset:
             f.write(csv)
 
     def clearProjections(self):
+        """Clears projections list
+        """
         self.projections = []
 
     def clearSelections(self):
+        """Clears selections list
+        """
         self.selections = []
 
     def clearOperations(self):
+        """Clears operations list
+        """
         self.operations = []
 
 
 class Metadata:
+    """Metadata object
+    """
 
     def __init__(self, latisInstance, dataset):
+        """Init metadata object
 
+        Args:
+            latisInstance (LatisInstance): LatisInstance object
+            dataset (Dataset): Dataset object
+        """
         self.properties = {}
 
         if latisInstance.latis3:

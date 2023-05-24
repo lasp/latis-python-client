@@ -28,6 +28,7 @@ def testShortcuts():
         'cls_radio_flux_f8', 'NUMPY', operations=['time<0'],
         preferVersion2=False)
     # Will auto switch to latis 2
+    print(type(testLatis2Np))
     print(testLatis2Np)
 
     print("Latis2 Pandas")
@@ -35,6 +36,7 @@ def testShortcuts():
         'https://lasp.colorado.edu/lisird/latis',
         'cls_radio_flux_f8', 'PANDAS', operations=['time<0'],
         preferVersion2=True)
+    print(type(testLatis2Pd))
     print(testLatis2Pd)
 
     print("Latis3 Numpy")
@@ -121,4 +123,4 @@ def testCore():
 
 
 testShortcuts()
-testCore()
+# testCore()
