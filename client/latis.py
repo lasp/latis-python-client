@@ -2,37 +2,41 @@ import numpy
 import pandas as pd
 import requests
 import urllib.parse
-    
+
 
 def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
     if preferVersion2:
         try:
             instanceV2 = LatisInstance(baseUrl, False)
-            dsObj = instanceV2.getDataset(dataset)
+            instanceV2.getDataset(dataset)
 
             return False
-        except:
-            print("[WARN]: " + dataset + " cannot be accessed through Latis version 2. Auto switching to version 3.")
+        except Exception:
+            print("[WARN]: " + dataset +
+                  " cannot be accessed through Latis version 2." +
+                  " Auto switching to version 3.")
 
             return True
     else:
         try:
             instanceV3 = LatisInstance(baseUrl, True)
-            dsObj = instanceV3.getDataset(dataset)
+            instanceV3.getDataset(dataset)
 
             return True
-        except:
-            print("[WARN]: " + dataset + " cannot be accessed through Latis version 3. Auto switching to version 2.")
+        except Exception:
+            print("[WARN]: " + dataset +
+                  " cannot be accessed through Latis version 3." +
+                  " Auto switching to version 2.")
 
             return False
 
 
-def data(baseUrl, dataset, returnType, operations=[], preferVersion2=False):
+def data(baseUrl, dataset, returnType,
+         projections=[], selections=[], operations=[], preferVersion2=False):
     latis3 = __datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
-    dsObj = instance.getDataset(dataset)
-    for o in operations:
-        dsObj.operate(o)
+    dsObj = instance.getDataset(dataset, projections, selections, operations)
+
     if returnType == 'NUMPY':
         return dsObj.asNumpy()
     elif returnType == 'PANDAS':
@@ -40,14 +44,15 @@ def data(baseUrl, dataset, returnType, operations=[], preferVersion2=False):
     else:
         return None
 
-def download(baseUrl, dataset, filename, fileFormat, operations=[], preferVersion2=False):
+
+def download(baseUrl, dataset, filename, fileFormat,
+             projections, selections, operations, preferVersion2=False):
     latis3 = __datasetWillUseVersion3(preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
-    dsObj = instance.getDataset(dataset)
-    for o in operations:
-        dsObj.operate(o)
+    dsObj = instance.getDataset(dataset, projections, selections, operations)
     dsObj.getFile(filename, fileFormat)
-  
+
+
 class LatisInstance:
 
     def __init__(self, baseUrl, latis3):
@@ -57,8 +62,8 @@ class LatisInstance:
 
         self.catalog = self.__getCatalog()
 
-    def getDataset(self, name):
-        return Dataset(self, name)
+    def getDataset(self, name, projections=[], selections=[], operations=[]):
+        return Dataset(self, name, projections, selections, operations)
 
     def __formatBaseUrl(self):
         if not self.baseUrl[-1] == '/':
@@ -102,36 +107,64 @@ class Catalog:
 
 class Dataset:
 
-    def __init__(self, latisInstance, name):
+    def __init__(self, latisInstance, name,
+                 projections=[], selections=[], operations=[]):
         self.latisInstance = latisInstance
         self.name = name
-        self.operations = []
+        self.projections = list(projections)
+        self.selections = list(selections)
+        self.operations = list(operations)
         self.query = None
 
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
+    def select(self, target="time", start="", end="", inclusive=True):
+
+        if start:
+            startBound = ">" if inclusive else ">="
+            select = target + startBound + str(start)
+            self.selections.append(select)
+
+        if end:
+            endBound = "<" if inclusive else "<="
+            select = target + endBound + str(end)
+            self.selections.append(select)
+
+        return self
+
+    def project(self, projectionList):
+        for p in projectionList:
+            self.projections.append(p)
+        return self
+
     def operate(self, operation):
         self.operations.append(operation)
-        self.buildQuery()
         return self
 
     def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
+        self.query += ','.join(urllib.parse.quote(p) for p in self.projections)
+
+        for s in self.selections:
+            self.query = self.query + '&' + urllib.parse.quote(s)
+
         for o in self.operations:
-            self.query = self.query + urllib.parse.quote(o) + '&'
+            self.query = self.query + '&' + urllib.parse.quote(o)
 
         return self.query
 
     def asPandas(self):
-        return pd.read_csv(self.query, parse_dates=[0], index_col=[0])
+        self.buildQuery()
+        return pd.read_csv(self.query)
 
     def asNumpy(self):
-        return pd.read_csv(self.query, parse_dates=[0],
-                           index_col=[0]).to_numpy()
+        self.buildQuery()
+        return pd.read_csv(self.query).to_numpy()
 
     def getFile(self, filename, format='csv'):
+        self.buildQuery()
         suffix = '.' + format
         if '.' not in filename:
             filename += suffix
@@ -140,6 +173,15 @@ class Dataset:
             csv = requests.get(self.query.replace('.csv', suffix)).text
             f = open(filename, 'w')
             f.write(csv)
+
+    def clearProjections(self):
+        self.projections = []
+
+    def clearSelections(self):
+        self.selections = []
+
+    def clearOperations(self):
+        self.operations = []
 
 
 class Metadata:
