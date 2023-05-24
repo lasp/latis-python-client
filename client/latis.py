@@ -145,8 +145,7 @@ class Dataset:
     def buildQuery(self):
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
-        for i in range(len(self.projections)):
-            self.query += ','.join(urllib.parse.quote(p) for p in self.projections)
+        self.query += ','.join(urllib.parse.quote(p) for p in self.projections)
 
         for s in self.selections:
             self.query = self.query + '&' + urllib.parse.quote(s)
