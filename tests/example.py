@@ -6,10 +6,10 @@ libPath = os.path.dirname(os.path.realpath(__file__))
 
 if platform.system() == 'Windows':
     libPath = libPath.replace('\\tests',
-                              '\\client')
+                              '\\src\\latis-python-client')
 else:
     libPath = libPath.replace('/tests',
-                              '/client')
+                              '/src/latis-python-client')
 
 sys.path.insert(0, libPath)
 
@@ -115,9 +115,9 @@ def testCore():
     print(mgData)
 
     # 7 - Get file
-    # clsRadioFluxF15.getFile('cls_radio_flux_f15')
-    # clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
-    # clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
 
 testShortcuts()
