@@ -113,7 +113,15 @@ def download(baseUrl, dataset, filename, fileFormat,
 
 
 class LatisInstance:
-    """LatisInstance object
+    """Instantiates access latis catalogs and datasets.
+
+    Attributes:
+        baseUrl (str): 
+            Latis base url (ex: 'https://lasp.colorado.edu/lisird/latis').
+        latis3 (bool): 
+            Select latis version 3 (True) or latis version 2 (False).
+        catalog (latis.Catalog):
+            Stores catalog object.
     """
 
     def __init__(self, baseUrl, latis3):
@@ -131,22 +139,26 @@ class LatisInstance:
         """
         self.baseUrl = baseUrl
         self.latis3 = latis3
-        print(type(self.baseUrl), type(self.latis3))
         self.__formatBaseUrl()
 
         self.catalog = self.__getCatalog()
+        print(type(self.baseUrl), type(self.latis3), type(self.catalog))
 
     def getDataset(self, name, projections=[], selections=[], operations=[]):
         """Creates and returns a Dataset object
 
         Args:
-            name (String): Latis dataset name
-            projections (list, optional): Inits dataset with projection list. Defaults to [].
-            selections (list, optional): Inits dataset with selection list. Defaults to [].
-            operations (list, optional): Inits datasets with operation list. Defaults to [].
+            name (str): 
+                Latis dataset name (ex: 'cls_radio_flux_f8').
+            projections (list, optional):
+                Stores list of projections for latis query. Each projection must be a list. Defaults to [].
+            selections (list, optional):
+                Stores list of selections for latis query. Defaults to [].
+            operations (list, optional):
+                Stores list of operations for latis query. Defaults to [].
 
         Returns:
-            _type_: Dataset object
+            latis.Dataset: Dataset object
         """
         return Dataset(self, name, projections, selections, operations)
 
@@ -163,15 +175,23 @@ class LatisInstance:
 
 
 class Catalog:
-    """Catalog object
+    """Stores catalog datasets and privides a method to search for specific datasets.
+
+    Attributes:
+        datasets (dict):
+            Dictionary of all datasets in the catalog with the format {Formatted name: latis name}.
+        list (numpy.ndarray):
+            List of all dataset latis names in catalog.
 
     """
 
     def __init__(self, latisInstance):
-        """_summary_
+        """Init Catalog Object.
+
+        Populates class datasets and list attributes.
 
         Args:
-            latisInstance (_type_): _description_
+            latisInstance (latis.LatisInstance): LatisInstance object.
         """
 
         self.datasets = {}
@@ -191,15 +211,18 @@ class Catalog:
             for i in range(len(self.list)):
                 self.datasets[names[i]] = self.list[i]
 
+
     def search(self, searchTerm):
-        """Filter catalog by search term
+        """Filter catalog by search term.
 
         Args:
-            searchTerm (String): filter for catalog
+            searchTerm (String): Filter term for catalog.
 
         Returns:
-            dict: Filtered catalog
+            list: Filtered catalog of latis names.
         """
+        print(type(self.datasets), type(self.list))
+
         if searchTerm:
             return [k for k in self.list if searchTerm in k]
         else:
@@ -207,7 +230,24 @@ class Catalog:
 
 
 class Dataset:
-    """Dataset object
+    """Provides methods obtain a dataset content in various formats and apply projections, selections or operations.
+
+     Attributes:
+        latisInstance (laits.LatisInstance):
+            
+        name (str):
+            
+        projections (list):
+            Stores list of projections for latis query. Each projection must be a list.
+        selections (list):
+            Stores list of selections for latis query.
+        operations (list):
+            Stores list of operations for latis query.
+        query (str):
+            Latis query.
+        metadata (latis.Metadata):
+            Metadata object.
+
     """
 
     def __init__(self, latisInstance, name,
@@ -215,11 +255,16 @@ class Dataset:
         """Init Dataset object
 
         Args:
-            latisInstance (LatisInstance): LatisInstance Object
-            name (String): Latis dataset name
-            projections (list, optional): _description_. Defaults to [].
-            selections (list, optional): _description_. Defaults to [].
-            operations (list, optional): _description_. Defaults to [].
+            latisInstance (LatisInstance): 
+                LatisInstance Object.
+            name (String): 
+                Latis dataset name.
+            projections (list, optional):
+                Stores list of projections for latis query. Each projection must be a list. Defaults to [].
+            selections (list, optional):
+                Stores list of selections for latis query. Defaults to [].
+            operations (list, optional):
+                Stores list of operations for latis query. Defaults to [].
         """
         self.latisInstance = latisInstance
         self.name = name
@@ -361,9 +406,13 @@ class Metadata:
     def __init__(self, latisInstance, dataset):
         """Init metadata object
 
+        Populates properties attribute.
+
         Args:
-            latisInstance (LatisInstance): LatisInstance object
-            dataset (Dataset): Dataset object
+            latisInstance (LatisInstance): 
+                Stores LatisInstance object.
+            dataset (Dataset): 
+                Stores Dataset object.
         """
         self.properties = {}
 
