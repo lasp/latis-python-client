@@ -76,7 +76,6 @@ def testCore():
     print('\nGetting Datasets\n')
     # 3 - Get dataset objects
     clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
-    print(type(clsRadioFluxF8))
     clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
     sorceMGIndex = instance3.getDataset('sorce_mg_index')
     clsRadioFluxF107 = instance.getDataset('cls_radio_flux_absolute_f107')
