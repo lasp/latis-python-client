@@ -4,7 +4,7 @@ import requests
 import urllib.parse
 
 
-def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
+def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2) -> bool:
     if preferVersion2:
         try:
             instanceV2 = LatisInstance(baseUrl, False)
@@ -32,7 +32,7 @@ def __datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
 
 
 def data(baseUrl, dataset, returnType,
-         projections=[], selections=[], operations=[], preferVersion2=False):
+         projections=[], selections=[], operations=[], preferVersion2=False) -> "numpy.ndarray | pd.DataFrame | None":
     latis3 = __datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
@@ -46,7 +46,7 @@ def data(baseUrl, dataset, returnType,
 
 
 def download(baseUrl, dataset, filename, fileFormat,
-             projections, selections, operations, preferVersion2=False):
+             projections, selections, operations, preferVersion2=False) -> None:
     latis3 = __datasetWillUseVersion3(preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
@@ -62,10 +62,10 @@ class LatisInstance:
 
         self.catalog = self.__getCatalog()
 
-    def getDataset(self, name, projections=[], selections=[], operations=[]):
+    def getDataset(self, name, projections=[], selections=[], operations=[]) -> "Dataset":
         return Dataset(self, name, projections, selections, operations)
 
-    def __formatBaseUrl(self):
+    def __formatBaseUrl(self) -> None:
         if not self.baseUrl[-1] == '/':
             self.baseUrl += '/'
         if self.latis3:
@@ -73,7 +73,7 @@ class LatisInstance:
         else:
             self.baseUrl += 'dap/'
 
-    def __getCatalog(self):
+    def __getCatalog(self) -> "Catalog":
         return Catalog(self)
 
 
@@ -98,9 +98,9 @@ class Catalog:
             for i in range(len(self.list)):
                 self.datasets[names[i]] = self.list[i]
 
-    def search(self, searchTerm):
+    def search(self, searchTerm) -> "numpy.ndarray":
         if searchTerm:
-            return [k for k in self.list if searchTerm in k]
+            return numpy.array([k for k in self.list if searchTerm in k])
         else:
             return self.list
 
@@ -119,7 +119,7 @@ class Dataset:
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def select(self, target="time", start="", end="", inclusive=True):
+    def select(self, target="time", start="", end="", inclusive=True) -> "Dataset":
 
         if start:
             startBound = ">" if inclusive else ">="
@@ -133,16 +133,16 @@ class Dataset:
 
         return self
 
-    def project(self, projectionList):
+    def project(self, projectionList) -> "Dataset":
         for p in projectionList:
             self.projections.append(p)
         return self
 
-    def operate(self, operation):
+    def operate(self, operation) -> "Dataset":
         self.operations.append(operation)
         return self
 
-    def buildQuery(self):
+    def buildQuery(self) -> str:
         self.query = self.latisInstance.baseUrl + self.name + '.csv?'
 
         self.query += ','.join(urllib.parse.quote(p) for p in self.projections)
@@ -163,7 +163,7 @@ class Dataset:
         self.buildQuery()
         return pd.read_csv(self.query).to_numpy()
 
-    def getFile(self, filename, format='csv'):
+    def getFile(self, filename, format='csv') -> None:
         self.buildQuery()
         suffix = '.' + format
         if '.' not in filename:
@@ -174,13 +174,13 @@ class Dataset:
             f = open(filename, 'w')
             f.write(csv)
 
-    def clearProjections(self):
+    def clearProjections(self) -> None:
         self.projections = []
 
-    def clearSelections(self):
+    def clearSelections(self) -> None:
         self.selections = []
 
-    def clearOperations(self):
+    def clearOperations(self) -> None:
         self.operations = []
 
 
