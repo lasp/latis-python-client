@@ -274,12 +274,12 @@ class Dataset:
         """
 
         if start:
-            startBound = ">" if inclusive else ">="
+            startBound = ">" if not inclusive else ">="
             select = target + startBound + str(start)
             self.selections.append(select)
 
         if end:
-            endBound = "<" if inclusive else "<="
+            endBound = "<" if not inclusive else "<="
             select = target + endBound + str(end)
             self.selections.append(select)
 
