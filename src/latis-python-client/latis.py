@@ -12,7 +12,7 @@ import urllib.parse
 
 
 def _datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
-    """Check which version of LaTiS dataset will be used.
+    """Checks which version of LaTiS dataset will be used.
 
     Args:
         baseUrl (str): The base URL of the LaTiS instance.
@@ -52,7 +52,7 @@ def _datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
 def data(baseUrl, dataset, returnType,
          projections=[], selections=[], operations=[], preferVersion2=False):
     """
-    Retrieve dataset from LaTiS instance.
+    Retrieves a dataset from LaTiS instance.
 
     This method fetches the dataset data from a LaTiS instance and
     transforms it into the specified format.
@@ -61,7 +61,7 @@ def data(baseUrl, dataset, returnType,
         baseUrl (str): The base URL of the LaTiS instance.
         dataset (str): The name of the dataset.
         returnType (str): Desired return type ('NUMPY' or 'PANDAS').
-        projections (list[list[str]], optional): List of projections to use.
+        projections (list[str], optional): List of projections to use.
         selections (list[str], optional): List of selections to use.
         operations (list[str], optional): List of operations to apply.
         preferVersion2 (bool, optional): If True, prefer LaTiS version 2.
@@ -85,14 +85,14 @@ def data(baseUrl, dataset, returnType,
 def download(baseUrl, dataset, filename, fileFormat,
              projections=[], selections=[], operations=[],
              preferVersion2=False):
-    """Download dataset from LaTiS instance to file.
+    """Downloads a dataset from LaTiS instance to file.
 
     Args:
         baseUrl (str): The base URL of the LaTiS instance.
         dataset (str): The name of the dataset.
         filename (str): The name of the file to download.
         fileFormat (str): The format of the file to download.
-        projections (list[list[str]], optional): List of projections to use.
+        projections (list[str], optional): List of projections to use.
         selections (list[str], optional): List of selections to use.
         operations (list[str], optional): List of operations to apply.
         preferVersion2 (bool, optional): If True, prefer LaTiS version 2.
@@ -136,7 +136,7 @@ class LatisInstance:
 
         Args:
             name (str): LaTiS dataset name (ex: 'cls_radio_flux_f8').
-            projections (list[list[str]], optional): List of projections
+            projections (list[str], optional): List of projections
                 to use.
             selections (list[str], optional): List of selections to use.
             operations (list[str], optional): List of operations to apply.
@@ -176,7 +176,7 @@ class Catalog:
         Populates a dictionary and list of avaiable datasets.
 
         Args:
-            latisInstance (LatisInstance): The LaTis instance to get
+            latisInstance (LatisInstance): The LaTiS instance to get
                 a catalog from.
         """
 
@@ -238,10 +238,10 @@ class Dataset:
         By default these will be empty lists.
 
         Args:
-            latisInstance (LatisInstance): The LaTis instance from which to
+            latisInstance (LatisInstance): The LaTiS instance from which to
                 access this dataset.
             name (str): The name of the dataset.
-            projections (list[list[str]], optional): List of projections
+            projections (list[str], optional): List of projections
                 to use.
             selections (list[str], optional): List of selections to use.
             operations (list[str], optional): List of operations to apply.
@@ -259,7 +259,7 @@ class Dataset:
 
     def select(self, target="time", start="", end="", inclusive=True):
         """
-        Define selection parameters for the dataset query.
+        Defines a selection parameters for the dataset query.
 
         Args:
             target (str, optional): Target parameter for selection.
@@ -287,7 +287,7 @@ class Dataset:
 
     def project(self, projectionList):
         """
-        Append a projection list for the dataset query.
+        Appends a projection list for the dataset query.
 
         Args:
             projectionList (List[str]): List of projections.
@@ -403,11 +403,11 @@ class Metadata:
     def __init__(self, latisInstance, dataset):
         """Initializes the Metadata object; retrieves the metadata properties.
 
-        Retrieves metadata from the provided LaTis instance and dataset. The
-        retrieval method depends on the version of LaTis being used.
+        Retrieves metadata from the provided LaTiS instance and dataset. The
+        retrieval method depends on the version of LaTiS being used.
 
         Args:
-            latisInstance (LatisInstance): The LaTis instance from which to
+            latisInstance (LatisInstance): The LaTiS instance from which to
                 retrieve metadata.
             dataset (Dataset): The dataset for which to retrieve metadata.
         """
