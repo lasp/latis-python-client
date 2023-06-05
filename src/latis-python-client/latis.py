@@ -257,7 +257,7 @@ class Dataset:
         self.metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def select(self, target="time", start="", end="", inclusive=True):
+    def select(self, target="time", start="", end="", inclusiveStart=True, inclusiveEnd=False):
         """
         Defines a selection parameters for the dataset query.
 
@@ -266,20 +266,22 @@ class Dataset:
                 Defaults to 'time'.
             start (str, optional): Start bound for selection. Empty by default.
             end (str, optional): End bound for selection. Empty by default.
-            inclusive (bool, optional): If True, bounds are inclusive.
+            inclusiveStart (bool, optional): If True, start bound is inclusive.
                 Defaults to True.
+            inclusiveEnd (bool, optional): If True, end bound is inclusive.
+                Defaults to False.
 
         Returns:
             Dataset: The Dataset instance, allowing for method chaining.
         """
 
         if start:
-            startBound = ">" if not inclusive else ">="
+            startBound = ">" if not inclusiveStart else ">="
             select = target + startBound + str(start)
             self.selections.append(select)
 
         if end:
-            endBound = "<" if not inclusive else "<="
+            endBound = "<" if not inclusiveEnd else "<="
             select = target + endBound + str(end)
             self.selections.append(select)
 
