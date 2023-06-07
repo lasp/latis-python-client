@@ -5,11 +5,11 @@ This script provides functionality to retrieve the dataset in either numpy
 or pandas format, and optionally download the dataset to a file.
 """
 
-import numpy
+import numpy as np
 import pandas as pd
 import requests
 import urllib.parse
-from typing import Dict, List, Union, Optional
+from typing import List, Dict, Any, Union, Optional
 
 
 def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) -> bool:
@@ -51,10 +51,10 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
 
 
 def data(baseUrl: str, dataset: str, returnType: str,
-         projections: Optional[List[str]] = [],
-         selections: Optional[List[str]] = [],
-         operations: Optional[List[str]] = [],
-         preferVersion2: bool = False) -> Union[numpy.ndarray, pd.DataFrame, None]:
+         projections: Optional[List[str]] = None,
+         selections: Optional[List[str]] = None,
+         operations: Optional[List[str]] = None,
+         preferVersion2: bool = False) -> Union[np.ndarray, pd.DataFrame, None]:
     """
     Retrieves a dataset from LaTiS instance.
 
@@ -71,7 +71,7 @@ def data(baseUrl: str, dataset: str, returnType: str,
         preferVersion2 (bool, optional): If True, prefer LaTiS version 2.
 
     Returns:
-        numpy.ndarray or pandas.DataFrame or None: Dataset data.
+        np.ndarray or pandas.DataFrame or None: Dataset data.
     """
 
     latis3 = _datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
@@ -87,9 +87,9 @@ def data(baseUrl: str, dataset: str, returnType: str,
 
 
 def download(baseUrl: str, dataset: str, filename: str, fileFormat: str,
-             projections: Optional[List[str]] = [],
-             selections: Optional[List[str]] = [],
-             operations: Optional[List[str]] = [],
+             projections: Optional[List[str]] = None,
+             selections: Optional[List[str]] = None,
+             operations: Optional[List[str]] = None,
              preferVersion2: bool = False) -> None:
     """Downloads a dataset from LaTiS instance to file.
 
@@ -130,16 +130,16 @@ class LatisInstance:
     """
 
     def __init__(self, baseUrl: str, latis3: bool):
-        self.baseUrl = baseUrl
-        self.latis3 = latis3
+        self.baseUrl: str = baseUrl
+        self.latis3: bool = latis3
         self._formatBaseUrl()
 
-        self.catalog = self._getCatalog()
+        self.catalog: Catalog = self._getCatalog()
 
     def getDataset(self, name: str,
-                   projections: Optional[List[str]] = [],
-                   selections: Optional[List[str]] = [],
-                   operations: Optional[List[str]] = []) -> "Dataset":
+                   projections: Optional[List[str]] = None,
+                   selections: Optional[List[str]] = None,
+                   operations: Optional[List[str]] = None) -> "Dataset":
         """
         Creates and returns a Dataset object.
 
@@ -176,7 +176,7 @@ class Catalog:
     Attributes:
         datasets (dict of {str: str}): A dictionary mapping formatted
             dataset names to their LaTiS names.
-        list (numpy.ndarray): List of all dataset LaTiS names in catalog.
+        list (np.ndarray): List of all dataset LaTiS names in catalog.
     """
 
     def __init__(self, latisInstance: LatisInstance):
@@ -189,13 +189,14 @@ class Catalog:
                 a catalog from.
         """
 
-        self.datasets = {}
+        self.datasets: dict = {}
+        self.list: np.ndarray[str, np.dtype[Any]]
 
         if latisInstance.latis3:
             js = requests.get(latisInstance.baseUrl).json()
             dataset = js['dataset']
-            titles = numpy.array([k['title'] for k in dataset])
-            self.list = numpy.array([k['identifier'] for k in dataset])
+            titles = np.array([k['title'] for k in dataset])
+            self.list = np.array([k['identifier'] for k in dataset])
             for i in range(len(self.list)):
                 self.datasets[titles[i]] = self.list[i]
         else:
@@ -206,7 +207,7 @@ class Catalog:
             for i in range(len(self.list)):
                 self.datasets[names[i]] = self.list[i]
 
-    def search(self, searchTerm: str) -> "numpy.ndarray":
+    def search(self, searchTerm: str) -> "np.ndarray":
         """
         Filters the catalog by a search term.
 
@@ -221,7 +222,7 @@ class Catalog:
         """
 
         if searchTerm:
-            return numpy.array([k for k in self.list if searchTerm in k])
+            return np.array([k for k in self.list if searchTerm in k])
         else:
             return self.list
 
@@ -240,9 +241,9 @@ class Dataset:
     """
 
     def __init__(self, latisInstance: LatisInstance, name: str,
-                 projections: Optional[List[str]] = [],
-                 selections: Optional[List[str]] = [],
-                 operations: Optional[List[str]] = []):
+                 projections: Optional[List[str]] = None,
+                 selections: Optional[List[str]] = None,
+                 operations: Optional[List[str]] = None):
         """Initializes the Dataset object and Metadata object.
 
         Initilizes lists of projections, selections and operations.
@@ -258,14 +259,14 @@ class Dataset:
             operations (list[str], optional): List of operations to apply.
         """
 
-        self.latisInstance = latisInstance
-        self.name = name
-        self.projections = list(projections)
-        self.selections = list(selections)
-        self.operations = list(operations)
-        self.query = None
+        self.latisInstance: LatisInstance = latisInstance
+        self.name: str = name
+        self.projections: list[str] = [] if projections is None else projections
+        self.selections: list[str] = [] if selections is None else selections
+        self.operations: list[str] = [] if operations is None else operations
+        self.query: str = ""
 
-        self.metadata = Metadata(latisInstance, self)
+        self.metadata: Metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
     def select(self, target: str = "time", start: str = "", end: str = "",
@@ -349,7 +350,7 @@ class Dataset:
 
         return self.query
 
-    def asPandas(self) -> "pd.DataFrame":
+    def asPandas(self) -> Union[pd.DataFrame, None]:
         """
         Returns data from LaTiS API as pandas dataframe.
 
@@ -360,12 +361,12 @@ class Dataset:
         self.buildQuery()
         return pd.read_csv(self.query)
 
-    def asNumpy(self) -> "numpy.DataFrame":
+    def asNumpy(self) -> Union[np.ndarray, None]:
         """
         Returns data from LaTiS API as numpy array.
 
         Returns:
-            numpy.ndarray: Data as numpy array.
+            np.ndarray: Data as numpy array.
         """
 
         self.buildQuery()
@@ -426,7 +427,7 @@ class Metadata:
             dataset (Dataset): The dataset for which to retrieve metadata.
         """
 
-        self.properties = {}
+        self.properties: dict = {}
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
