@@ -6,14 +6,14 @@ libPath = os.path.dirname(os.path.realpath(__file__))
 
 if platform.system() == 'Windows':
     libPath = libPath.replace('\\tests',
-                              '\\src\\latispy')
+                              '\\src\\')
 else:
     libPath = libPath.replace('/tests',
-                              '/src/latispy')
+                              '/src/')
 
 sys.path.insert(0, libPath)
 
-import latispy as latis
+import latis.client as latis
 
 
 def testShortcuts():
