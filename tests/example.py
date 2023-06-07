@@ -80,8 +80,8 @@ def testCore():
 
     print('\nCreating Queries\n')
     # 4 - Create queries
-    clsRadioFluxF15.select('time<0')
-    sorceMGIndex.select('time<2452705')
+    clsRadioFluxF15.select(start='0')
+    sorceMGIndex.select(start='2452705')
     clsRadioFluxF107.project(['time', 'absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
     # clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
 
