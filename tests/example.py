@@ -13,7 +13,7 @@ else:
 
 sys.path.insert(0, libPath)
 
-import latis
+import latispy as latis
 
 
 def testShortcuts():
