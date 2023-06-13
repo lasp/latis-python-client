@@ -119,6 +119,80 @@ def testCore():
     clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
     clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
+def testErrors():
+    testLatis2Np = latis.data(
+        'https://lasp.colorado.edu/lisird/latis',
+        'cls_radio_flux_f83', 'NUMPY', operations=['time<0'],
+        preferVersion2=False)
 
-testShortcuts()
-testCore()
+    print(testLatis2Np)
+
+    instance = latis.LatisInstance(
+        baseUrl='https://lasp.colorado.edu/lisird/latis',
+        latis3=False)
+    
+    instance3 = latis.LatisInstance(
+        baseUrl='https://lasp.colorado.edu/lisird/latis',
+        latis3=True)   
+
+    instancebad = latis.LatisInstance(
+        baseUrl='https://lasp.colorado.edu/lis3rd/latis',
+        latis3=True)
+
+    print('\nSearch Catalog\n')
+    # 2 - Search Catalog
+    # print(instance.catalog.list) # (Full catalog)
+    print(instancebad.catalog.datasets)
+    print(instancebad.catalog.search('so3rce'))
+
+    print('\nGetting Datasets\n')
+    # 3 - Get dataset objects
+    clsRadioFluxF8 = instance.getDataset('cls_radio3_flux_f8')
+    clsRadioFluxF15 = instance.getDataset('cls_radi3o_flux_f15')
+    sorceMGIndex = instance3.getDataset('sorce_mg3_index')
+    clsRadioFluxF107 = instance.getDataset('cls_radio3_flux_absolute_f107')
+
+    print('\nCreating Queries\n')
+    # 4 - Create queries
+    clsRadioFluxF15.select(start='0')
+    sorceMGIndex.select(start='-19023')
+    clsRadioFluxF107.project(['232', '23231']).select(start='A', end='QERWEEWD').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
+    # clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
+
+    print(clsRadioFluxF8.buildQuery())
+    print(clsRadioFluxF15.buildQuery())
+    print(clsRadioFluxF107.buildQuery())
+
+    print('\nGet Metadata\n')
+    # 5 - Get metadata
+    print(clsRadioFluxF15.metadata.properties)
+    print(clsRadioFluxF8.metadata.properties)
+    print(sorceMGIndex.metadata.properties)
+
+    print('\nGet data\n')
+    # 6 - Get data
+
+    print("clsRadioFluxF15:", clsRadioFluxF15.projections,
+          clsRadioFluxF15.selections, clsRadioFluxF15.operations)
+    print("clsRadioFluxF8:", clsRadioFluxF8.projections,
+          clsRadioFluxF8.selections, clsRadioFluxF8.operations)
+    print("clsRadioFluxF107:", clsRadioFluxF107.projections,
+          clsRadioFluxF107.selections, clsRadioFluxF107.operations)
+    print("sorceMGIndex:", sorceMGIndex.projections,
+          sorceMGIndex.selections, sorceMGIndex.operations)
+
+    pandasDF = clsRadioFluxF15.asPandas()
+    print(pandasDF)
+    numpy = clsRadioFluxF107.asNumpy()
+    print(numpy)
+    mgData = sorceMGIndex.asPandas()
+    print(mgData)
+
+    # 7 - Get file
+    clsRadioFluxF15.getFile('cls_radio_flux_f15')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
+
+testErrors()
+# testShortcuts()
+# testCore()

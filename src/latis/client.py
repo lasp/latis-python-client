@@ -49,6 +49,16 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
 
             return False
 
+def _checkQuery(query, expectTextError=True):
+    r = requests.get(query)
+    if r.status_code > 399:
+        if expectTextError:
+            print(r.text)
+        else:
+            print(r.status_code)
+        return False
+    else:
+        return True
 
 def data(baseUrl: str, dataset: str, returnType: str,
          projections: Optional[List[str]] = None,
@@ -193,19 +203,25 @@ class Catalog:
         self.list: np.ndarray[str, np.dtype[Any]]
 
         if latisInstance.latis3:
-            js = requests.get(latisInstance.baseUrl).json()
-            dataset = js['dataset']
-            titles = np.array([k['title'] for k in dataset])
-            self.list = np.array([k['identifier'] for k in dataset])
-            for i in range(len(self.list)):
-                self.datasets[titles[i]] = self.list[i]
+            if _checkQuery(latisInstance.baseUrl, expectTextError=False):
+                js = requests.get(latisInstance.baseUrl).json()
+                dataset = js['dataset']
+                titles = np.array([k['title'] for k in dataset])
+                self.list = np.array([k['identifier'] for k in dataset])
+                for i in range(len(self.list)):
+                    self.datasets[titles[i]] = self.list[i]
+            else:
+                self.list = np.array([])
         else:
             q = latisInstance.baseUrl + 'catalog.csv'
-            df = pd.read_csv(q)
-            names = df['name']
-            self.list = df['accessURL'].to_numpy()
-            for i in range(len(self.list)):
-                self.datasets[names[i]] = self.list[i]
+            if _checkQuery(q):
+                df = pd.read_csv(q)
+                names = df['name']
+                self.list = df['accessURL'].to_numpy()
+                for i in range(len(self.list)):
+                    self.datasets[names[i]] = self.list[i]
+            else:
+                self.list = np.array([])
 
     def search(self, searchTerm: str) -> "np.ndarray":
         """
@@ -348,7 +364,10 @@ class Dataset:
         for o in self.operations:
             self.query = self.query + '&' + urllib.parse.quote(o)
 
-        return self.query
+        if _checkQuery(self.query):
+            return self.query
+        else:
+            return None
 
     def asPandas(self) -> Union[pd.DataFrame, None]:
         """
@@ -358,8 +377,10 @@ class Dataset:
             pandas.DataFrame: Data as pandas dataframe.
         """
 
-        self.buildQuery()
-        return pd.read_csv(self.query)
+        if self.buildQuery():
+            return pd.read_csv(self.query)
+        else:
+            return None
 
     def asNumpy(self) -> Union[np.ndarray, None]:
         """
@@ -369,8 +390,10 @@ class Dataset:
             np.ndarray: Data as numpy array.
         """
 
-        self.buildQuery()
-        return pd.read_csv(self.query).to_numpy()
+        if self.buildQuery():
+            return pd.read_csv(self.query).to_numpy()
+        else:
+            return None
 
     def getFile(self, filename: str, format: str = 'csv') -> None:
         """
@@ -431,9 +454,11 @@ class Metadata:
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
-            variables = pd.read_json(q)['variable']
-            for i in range(len(variables)):
-                self.properties[variables[i]['id']] = variables[i]
+            if _checkQuery(q):
+                variables = pd.read_json(q)['variable']
+                for i in range(len(variables)):
+                    self.properties[variables[i]['id']] = variables[i]
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.properties = pd.read_json(q).iloc[1][0]
+            if _checkQuery(q):
+                self.properties = pd.read_json(q).iloc[1][0]
