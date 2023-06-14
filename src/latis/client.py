@@ -5,10 +5,12 @@ This script provides functionality to retrieve the dataset in either numpy
 or pandas format, and optionally download the dataset to a file.
 """
 
+import logging
 import numpy as np
 import pandas as pd
 import requests
 import urllib.parse
+
 from typing import List, Dict, Any, Union, Optional
 
 
@@ -31,7 +33,7 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
 
             return False
         except Exception:
-            print("[WARN]: " + dataset +
+            logging.warning(dataset +
                   " cannot be accessed through LaTiS version 2." +
                   " Auto switching to version 3.")
 
@@ -43,7 +45,7 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
 
             return True
         except Exception:
-            print("[WARN]: " + dataset +
+            logging.warning(dataset +
                   " cannot be accessed through LaTiS version 3." +
                   " Auto switching to version 2.")
 
@@ -53,9 +55,9 @@ def _checkQuery(query, expectTextError=True):
     r = requests.get(query)
     if r.status_code > 399:
         if expectTextError:
-            print(r.text)
+            logging.error("Query is invalid: " + query + " returned: " + r.text)
         else:
-            print(r.status_code)
+            logging.error("Query is invalid: " + query + " returned: " + str(r.status_code))
         return False
     else:
         return True
@@ -87,6 +89,8 @@ def data(baseUrl: str, dataset: str, returnType: str,
     latis3 = _datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
+
+    returnType = returnType.upper()
 
     if returnType == 'NUMPY':
         return dsObj.asNumpy()
@@ -211,6 +215,7 @@ class Catalog:
                 for i in range(len(self.list)):
                     self.datasets[titles[i]] = self.list[i]
             else:
+                logging.error("Cannot populate catalog. Query was None.")
                 self.list = np.array([])
         else:
             q = latisInstance.baseUrl + 'catalog.csv'
@@ -221,6 +226,7 @@ class Catalog:
                 for i in range(len(self.list)):
                     self.datasets[names[i]] = self.list[i]
             else:
+                logging.error("Cannot populate catalog. Query was None.")
                 self.list = np.array([])
 
     def search(self, searchTerm: str) -> "np.ndarray":
@@ -364,10 +370,10 @@ class Dataset:
         for o in self.operations:
             self.query = self.query + '&' + urllib.parse.quote(o)
 
-        if _checkQuery(self.query):
-            return self.query
-        else:
-            return None
+        if not _checkQuery(self.query):
+            self.query = None
+        
+        return self.query
 
     def asPandas(self) -> Union[pd.DataFrame, None]:
         """
@@ -406,15 +412,24 @@ class Dataset:
             format (str): Format of file. Defaults to 'csv'.
         """
 
-        self.buildQuery()
-        suffix = '.' + format
-        if '.' not in filename:
-            filename += suffix
+        
+        validFormats = ['asc', 'bin', 'csv', 'das', 'dds', 'dods', 'html', 'json', 'jsona', 'jsond', 'nc', 'tab', 'txt', 'zip', 'zip3']
 
-        if filename is not None:
-            csv = requests.get(self.query.replace('.csv', suffix)).text
-            f = open(filename, 'w')
-            f.write(csv)
+        if format in validFormats:
+            if self.buildQuery():
+                suffix = '.' + format
+                if '.' not in filename:
+                    filename += suffix
+
+                if filename is not None:
+                    csv = requests.get(self.query.replace('.csv', suffix)).text
+                    f = open(filename, 'w')
+                    f.write(csv)
+            else:
+                logging.error("Cannot create file. Query was none. Check that dataset is valid.")
+        else:
+            logging.error("Cannot create file. " + format + " is not a valid LaTiS format. Valid formats are: " + str(validFormats))
+            
 
     def clearProjections(self) -> None:
         """Clears the list of projections for the dataset."""
@@ -458,7 +473,11 @@ class Metadata:
                 variables = pd.read_json(q)['variable']
                 for i in range(len(variables)):
                     self.properties[variables[i]['id']] = variables[i]
+            else:
+                logging.error("Cannot populate metadata. Query was None.")
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
             if _checkQuery(q):
                 self.properties = pd.read_json(q).iloc[1][0]
+            else:
+                logging.error("Cannot populate metadata. Query was None.")
