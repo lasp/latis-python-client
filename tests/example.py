@@ -6,14 +6,14 @@ libPath = os.path.dirname(os.path.realpath(__file__))
 
 if platform.system() == 'Windows':
     libPath = libPath.replace('\\tests',
-                              '\\src\\latis-python-client')
+                              '\\src\\')
 else:
     libPath = libPath.replace('/tests',
-                              '/src/latis-python-client')
+                              '/src/')
 
 sys.path.insert(0, libPath)
 
-import latis
+import latis.client as latis
 
 
 def testShortcuts():
@@ -80,8 +80,8 @@ def testCore():
 
     print('\nCreating Queries\n')
     # 4 - Create queries
-    clsRadioFluxF15.select('time<0')
-    sorceMGIndex.select('time<2452705')
+    clsRadioFluxF15.select(start='0')
+    sorceMGIndex.select(start='2452705')
     clsRadioFluxF107.project(['time', 'absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
     # clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
 

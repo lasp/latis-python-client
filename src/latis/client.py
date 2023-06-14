@@ -5,13 +5,14 @@ This script provides functionality to retrieve the dataset in either numpy
 or pandas format, and optionally download the dataset to a file.
 """
 
-import numpy
+import numpy as np
 import pandas as pd
 import requests
 import urllib.parse
+from typing import List, Dict, Any, Union, Optional
 
 
-def _datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
+def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) -> bool:
     """Checks which version of LaTiS dataset will be used.
 
     Args:
@@ -49,8 +50,11 @@ def _datasetWillUseVersion3(baseUrl, dataset, preferVersion2):
             return False
 
 
-def data(baseUrl, dataset, returnType,
-         projections=[], selections=[], operations=[], preferVersion2=False):
+def data(baseUrl: str, dataset: str, returnType: str,
+         projections: Optional[List[str]] = None,
+         selections: Optional[List[str]] = None,
+         operations: Optional[List[str]] = None,
+         preferVersion2: bool = False) -> Union[np.ndarray, pd.DataFrame, None]:
     """
     Retrieves a dataset from LaTiS instance.
 
@@ -67,7 +71,7 @@ def data(baseUrl, dataset, returnType,
         preferVersion2 (bool, optional): If True, prefer LaTiS version 2.
 
     Returns:
-        numpy.ndarray or pandas.DataFrame or None: Dataset data.
+        np.ndarray or pandas.DataFrame or None: Dataset data.
     """
 
     latis3 = _datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
@@ -82,9 +86,11 @@ def data(baseUrl, dataset, returnType,
         return None
 
 
-def download(baseUrl, dataset, filename, fileFormat,
-             projections=[], selections=[], operations=[],
-             preferVersion2=False):
+def download(baseUrl: str, dataset: str, filename: str, fileFormat: str,
+             projections: Optional[List[str]] = None,
+             selections: Optional[List[str]] = None,
+             operations: Optional[List[str]] = None,
+             preferVersion2: bool = False) -> None:
     """Downloads a dataset from LaTiS instance to file.
 
     Args:
@@ -123,14 +129,17 @@ class LatisInstance:
             False otherwise.
     """
 
-    def __init__(self, baseUrl, latis3):
-        self.baseUrl = baseUrl
-        self.latis3 = latis3
+    def __init__(self, baseUrl: str, latis3: bool):
+        self.baseUrl: str = baseUrl
+        self.latis3: bool = latis3
         self._formatBaseUrl()
 
-        self.catalog = self._getCatalog()
+        self.catalog: Catalog = self._getCatalog()
 
-    def getDataset(self, name, projections=[], selections=[], operations=[]):
+    def getDataset(self, name: str,
+                   projections: Optional[List[str]] = None,
+                   selections: Optional[List[str]] = None,
+                   operations: Optional[List[str]] = None) -> "Dataset":
         """
         Creates and returns a Dataset object.
 
@@ -146,7 +155,7 @@ class LatisInstance:
         """
         return Dataset(self, name, projections, selections, operations)
 
-    def _formatBaseUrl(self):
+    def _formatBaseUrl(self) -> None:
         """
         Appends dap2 or dap3 depending on LaTiS version.
         """
@@ -157,7 +166,7 @@ class LatisInstance:
         else:
             self.baseUrl += 'dap/'
 
-    def _getCatalog(self):
+    def _getCatalog(self) -> "Catalog":
         return Catalog(self)
 
 
@@ -167,10 +176,10 @@ class Catalog:
     Attributes:
         datasets (dict of {str: str}): A dictionary mapping formatted
             dataset names to their LaTiS names.
-        list (numpy.ndarray): List of all dataset LaTiS names in catalog.
+        list (np.ndarray): List of all dataset LaTiS names in catalog.
     """
 
-    def __init__(self, latisInstance):
+    def __init__(self, latisInstance: LatisInstance):
         """Initializes the Catalog Object.
 
         Populates a dictionary and list of avaiable datasets.
@@ -180,13 +189,14 @@ class Catalog:
                 a catalog from.
         """
 
-        self.datasets = {}
+        self.datasets: dict = {}
+        self.list: np.ndarray[str, np.dtype[Any]]
 
         if latisInstance.latis3:
             js = requests.get(latisInstance.baseUrl).json()
             dataset = js['dataset']
-            titles = numpy.array([k['title'] for k in dataset])
-            self.list = numpy.array([k['identifier'] for k in dataset])
+            titles = np.array([k['title'] for k in dataset])
+            self.list = np.array([k['identifier'] for k in dataset])
             for i in range(len(self.list)):
                 self.datasets[titles[i]] = self.list[i]
         else:
@@ -197,7 +207,7 @@ class Catalog:
             for i in range(len(self.list)):
                 self.datasets[names[i]] = self.list[i]
 
-    def search(self, searchTerm):
+    def search(self, searchTerm: str) -> "np.ndarray":
         """
         Filters the catalog by a search term.
 
@@ -212,7 +222,7 @@ class Catalog:
         """
 
         if searchTerm:
-            return [k for k in self.list if searchTerm in k]
+            return np.array([k for k in self.list if searchTerm in k])
         else:
             return self.list
 
@@ -230,8 +240,10 @@ class Dataset:
         metadata (Metadata): Metadata object.
     """
 
-    def __init__(self, latisInstance, name,
-                 projections=[], selections=[], operations=[]):
+    def __init__(self, latisInstance: LatisInstance, name: str,
+                 projections: Optional[List[str]] = None,
+                 selections: Optional[List[str]] = None,
+                 operations: Optional[List[str]] = None):
         """Initializes the Dataset object and Metadata object.
 
         Initilizes lists of projections, selections and operations.
@@ -247,17 +259,18 @@ class Dataset:
             operations (list[str], optional): List of operations to apply.
         """
 
-        self.latisInstance = latisInstance
-        self.name = name
-        self.projections = list(projections)
-        self.selections = list(selections)
-        self.operations = list(operations)
-        self.query = None
+        self.latisInstance: LatisInstance = latisInstance
+        self.name: str = name
+        self.projections: list[str] = [] if projections is None else projections
+        self.selections: list[str] = [] if selections is None else selections
+        self.operations: list[str] = [] if operations is None else operations
+        self.query: str = ""
 
-        self.metadata = Metadata(latisInstance, self)
+        self.metadata: Metadata = Metadata(latisInstance, self)
         self.buildQuery()
 
-    def select(self, target="time", start="", end="", inclusiveStart=True, inclusiveEnd=False):
+    def select(self, target: str = "time", start: str = "", end: str = "",
+               inclusiveStart: bool = True, inclusiveEnd: bool = False) -> "Dataset":
         """
         Defines a selection parameters for the dataset query.
 
@@ -287,12 +300,12 @@ class Dataset:
 
         return self
 
-    def project(self, projectionList):
+    def project(self, projectionList: list[str]) -> "Dataset":
         """
         Appends a projection list for the dataset query.
 
         Args:
-            projectionList (List[str]): List of projections.
+            projectionList (list[str]): List of projections.
 
         Returns:
             Dataset: The Dataset instance, allowing for method chaining.
@@ -302,7 +315,7 @@ class Dataset:
             self.projections.append(p)
         return self
 
-    def operate(self, operation):
+    def operate(self, operation: str) -> "Dataset":
         """
         Append an operation for the dataset query.
 
@@ -316,7 +329,7 @@ class Dataset:
         self.operations.append(operation)
         return self
 
-    def buildQuery(self):
+    def buildQuery(self) -> str:
         """
         Builds the query for the LaTiS API using the selections,
         projections and operations added.
@@ -337,7 +350,7 @@ class Dataset:
 
         return self.query
 
-    def asPandas(self):
+    def asPandas(self) -> Union[pd.DataFrame, None]:
         """
         Returns data from LaTiS API as pandas dataframe.
 
@@ -348,18 +361,18 @@ class Dataset:
         self.buildQuery()
         return pd.read_csv(self.query)
 
-    def asNumpy(self):
+    def asNumpy(self) -> Union[np.ndarray, None]:
         """
         Returns data from LaTiS API as numpy array.
 
         Returns:
-            numpy.ndarray: Data as numpy array.
+            np.ndarray: Data as numpy array.
         """
 
         self.buildQuery()
         return pd.read_csv(self.query).to_numpy()
 
-    def getFile(self, filename, format='csv'):
+    def getFile(self, filename: str, format: str = 'csv') -> None:
         """
         Writes the dataset data to a local file.
 
@@ -380,15 +393,15 @@ class Dataset:
             f = open(filename, 'w')
             f.write(csv)
 
-    def clearProjections(self):
+    def clearProjections(self) -> None:
         """Clears the list of projections for the dataset."""
         self.projections = []
 
-    def clearSelections(self):
+    def clearSelections(self) -> None:
         """Clears the list of selections for the dataset."""
         self.selections = []
 
-    def clearOperations(self):
+    def clearOperations(self) -> None:
         """Clears the list of operations for the dataset."""
         self.operations = []
 
@@ -402,7 +415,7 @@ class Metadata:
             variable metadata.
     """
 
-    def __init__(self, latisInstance, dataset):
+    def __init__(self, latisInstance: LatisInstance, dataset: Dataset):
         """Initializes the Metadata object; retrieves the metadata properties.
 
         Retrieves metadata from the provided LaTiS instance and dataset. The
@@ -414,7 +427,7 @@ class Metadata:
             dataset (Dataset): The dataset for which to retrieve metadata.
         """
 
-        self.properties = {}
+        self.properties: dict = {}
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
