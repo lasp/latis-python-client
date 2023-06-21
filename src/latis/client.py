@@ -13,6 +13,8 @@ import urllib.parse
 
 from typing import List, Dict, Any, Union, Optional
 
+FORMAT = '[%(levelname)s: %(filename)s: %(funcName)s: %(lineno)d]: \n %(message)s \n'
+logging.basicConfig(format=FORMAT)
 
 def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) -> bool:
     """Checks which version of LaTiS dataset will be used.
@@ -55,9 +57,9 @@ def _checkQuery(query, expectTextError=True):
     r = requests.get(query)
     if r.status_code > 399:
         if expectTextError:
-            logging.error("Query is invalid: " + query + " returned: " + r.text)
+            logging.error("Query is invalid: " + query + "\r\n Got: " + r.text)
         else:
-            logging.error("Query is invalid: " + query + " returned: " + str(r.status_code))
+            logging.error("Query is invalid: " + query + " Got: " + str(r.status_code))
         return False
     else:
         return True
@@ -144,6 +146,7 @@ class LatisInstance:
     """
 
     def __init__(self, baseUrl: str, latis3: bool):
+
         self.baseUrl: str = baseUrl
         self.latis3: bool = latis3
         self._formatBaseUrl()

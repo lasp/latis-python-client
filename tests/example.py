@@ -149,7 +149,7 @@ def testErrors():
     pandasDF = clsRadioFluxF15.asPandas()
     numpy = clsRadioFluxF107.asNumpy()
     mgData = sorceMGIndex.asPandas()
-    
+
     clsRadioFluxF15.getFile('cls_radio_flux_f15')
     clsRadioFluxF15.getFile('cls_radio_flux_f15', '3txt')
     clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
