@@ -54,8 +54,20 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
             return False
 
 def _checkQuery(query, expectTextError=True):
+    """Checks to see if query will return an error from LaTiS.
+
+    Args:
+        query (str): The query to be checked.
+        expectTextError (bool, optional): 
+            Error is expected in request text if True.
+            Error is expected only via a status code if False.
+
+    Returns:
+        bool: True if query has no errors, False otherwise.
+    """
+
     r = requests.get(query)
-    if r.status_code > 399:
+    if r.status_code > 399: # Is an error and not just a nominal status code.
         if expectTextError:
             logging.error("Query is invalid: " + query + "\r\n Got: " + r.text)
         else:
@@ -374,7 +386,7 @@ class Dataset:
             self.query = self.query + '&' + urllib.parse.quote(o)
 
         if not _checkQuery(self.query):
-            self.query = None
+            self.query = ""
         
         return self.query
 
