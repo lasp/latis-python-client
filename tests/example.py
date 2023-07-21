@@ -119,6 +119,44 @@ def testCore():
     clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt')
     clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
+def testErrors():
+    # testLatis2Np = latis.data(
+    #     'https://lasp.colorado.edu/lisird/latis',
+    #     'cls_radio_flux_f83', 'NUMPY', operations=['time<0'],
+    #     preferVersion2=False)
+    
+    instance = latis.LatisInstance(
+        baseUrl='https://lasp.colorado.edu/lisird/latis',
+        latis3=False)
+    
+    instance3 = latis.LatisInstance(
+        baseUrl='https://lasp.colorado.edu/lisird/latis',
+        latis3=True)   
 
-testShortcuts()
-testCore()
+    instancebad = latis.LatisInstance(
+        baseUrl='https://lasp.colorado.edu/lis3rd/latis',
+        latis3=True)
+
+    instance.getDataset('cls_radio3_flux_f8')
+    instance.getDataset('cls_radi3o_flux_f15')
+    instance3.getDataset('sorce_mg3_index')
+    instance.getDataset('cls_radio3_flux_absolute_f107')
+    
+    clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
+    clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
+    sorceMGIndex = instance3.getDataset('sorce_mg_index')
+    clsRadioFluxF107 = instance.getDataset('cls_radio_flux_absolute_f107')
+
+    clsRadioFluxF15.select(start='A')
+    clsRadioFluxF107.project(['232', '23231']).select(start='A', end='QERWEEWD').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
+
+    print(clsRadioFluxF15.asPandas())
+    print(clsRadioFluxF107.asNumpy())
+
+    clsRadioFluxF15.getFile('cls_radio_flux_f15')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15', '3txt')
+    clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
+
+testErrors()
+# testShortcuts()
+# testCore()

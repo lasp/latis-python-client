@@ -5,12 +5,16 @@ This script provides functionality to retrieve the dataset in either numpy
 or pandas format, and optionally download the dataset to a file.
 """
 
+import logging
 import numpy as np
 import pandas as pd
 import requests
 import urllib.parse
+
 from typing import List, Dict, Any, Union, Optional
 
+FORMAT = '[%(levelname)s at %(filename)s in %(funcName)s line %(lineno)d]: %(message)s'
+logging.basicConfig(format=FORMAT)
 
 def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) -> bool:
     """Checks which version of LaTiS dataset will be used.
@@ -31,7 +35,7 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
 
             return False
         except Exception:
-            print("[WARN]: " + dataset +
+            logging.warning(dataset +
                   " cannot be accessed through LaTiS version 2." +
                   " Auto switching to version 3.")
 
@@ -43,12 +47,37 @@ def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) ->
 
             return True
         except Exception:
-            print("[WARN]: " + dataset +
+            logging.warning(dataset +
                   " cannot be accessed through LaTiS version 3." +
                   " Auto switching to version 2.")
 
             return False
 
+def _checkQuery(query, expectTextError=True):
+    """Checks to see if query will return an error from LaTiS.
+
+    Args:
+        query (str): The query to be checked.
+        expectTextError (bool, optional): 
+            Error is expected in request text if True.
+            Error is expected only via a status code if False.
+
+    Returns:
+        (bool, str): 
+            First element True if query has no errors, False otherwise.
+            Second element contains any error info from LaTiS.
+    """
+
+    errorText = ""
+    r = requests.get(query)
+    if r.status_code > 399: # Is an error and not just a nominal status code.
+        if expectTextError:
+            errorText = "    Query: " + query + " got:\n    " + "\n    ".join(x for x in r.text.strip().split("\n"))
+        else:
+            errorText = "    Query: " + query + " got: " + str(r.status_code)
+        return {"valid": False, "errorText": errorText}
+    else:
+        return {"valid": True, "errorText": errorText}
 
 def data(baseUrl: str, dataset: str, returnType: str,
          projections: Optional[List[str]] = None,
@@ -77,6 +106,8 @@ def data(baseUrl: str, dataset: str, returnType: str,
     latis3 = _datasetWillUseVersion3(baseUrl, dataset, preferVersion2)
     instance = LatisInstance(baseUrl, latis3)
     dsObj = instance.getDataset(dataset, projections, selections, operations)
+
+    returnType = returnType.upper()
 
     if returnType == 'NUMPY':
         return dsObj.asNumpy()
@@ -193,19 +224,32 @@ class Catalog:
         self.list: np.ndarray[str, np.dtype[Any]]
 
         if latisInstance.latis3:
-            js = requests.get(latisInstance.baseUrl).json()
-            dataset = js['dataset']
-            titles = np.array([k['title'] for k in dataset])
-            self.list = np.array([k['identifier'] for k in dataset])
-            for i in range(len(self.list)):
-                self.datasets[titles[i]] = self.list[i]
+            queryCheck: dict = _checkQuery(latisInstance.baseUrl, expectTextError=False)
+
+            if queryCheck['valid']:
+                js = requests.get(latisInstance.baseUrl).json()
+                dataset = js['dataset']
+                titles = np.array([k['title'] for k in dataset])
+                self.list = np.array([k['identifier'] for k in dataset])
+                for i in range(len(self.list)):
+                    self.datasets[titles[i]] = self.list[i]
+            else:
+                logging.error("Cannot populate catalog.\n" + queryCheck["errorText"])
+                self.list = np.array([])
         else:
             q = latisInstance.baseUrl + 'catalog.csv'
-            df = pd.read_csv(q)
-            names = df['name']
-            self.list = df['accessURL'].to_numpy()
-            for i in range(len(self.list)):
-                self.datasets[names[i]] = self.list[i]
+
+            queryCheck: dict = _checkQuery(q)
+
+            if queryCheck['valid']:
+                df = pd.read_csv(q)
+                names = df['name']
+                self.list = df['accessURL'].to_numpy()
+                for i in range(len(self.list)):
+                    self.datasets[names[i]] = self.list[i]
+            else:
+                logging.error("Cannot populate catalog.\n" + queryCheck["errorText"])
+                self.list = np.array([])
 
     def search(self, searchTerm: str) -> "np.ndarray":
         """
@@ -348,6 +392,12 @@ class Dataset:
         for o in self.operations:
             self.query = self.query + '&' + urllib.parse.quote(o)
 
+        queryCheck: dict = _checkQuery(self.query)
+
+        if not queryCheck['valid']:
+            self.query = ""
+            logging.error("Cannot build query\n" + queryCheck["errorText"])
+        
         return self.query
 
     def asPandas(self) -> Union[pd.DataFrame, None]:
@@ -358,8 +408,10 @@ class Dataset:
             pandas.DataFrame: Data as pandas dataframe.
         """
 
-        self.buildQuery()
-        return pd.read_csv(self.query)
+        if self.buildQuery():
+            return pd.read_csv(self.query)
+        else:
+            return None
 
     def asNumpy(self) -> Union[np.ndarray, None]:
         """
@@ -369,8 +421,10 @@ class Dataset:
             np.ndarray: Data as numpy array.
         """
 
-        self.buildQuery()
-        return pd.read_csv(self.query).to_numpy()
+        if self.buildQuery():
+            return pd.read_csv(self.query).to_numpy()
+        else:
+            return None
 
     def getFile(self, filename: str, format: str = 'csv') -> None:
         """
@@ -383,15 +437,24 @@ class Dataset:
             format (str): Format of file. Defaults to 'csv'.
         """
 
-        self.buildQuery()
-        suffix = '.' + format
-        if '.' not in filename:
-            filename += suffix
+        
+        validFormats = ['asc', 'bin', 'csv', 'das', 'dds', 'dods', 'html', 'json', 'jsona', 'jsond', 'nc', 'tab', 'txt', 'zip', 'zip3']
 
-        if filename is not None:
-            csv = requests.get(self.query.replace('.csv', suffix)).text
-            f = open(filename, 'w')
-            f.write(csv)
+        if format in validFormats:
+            if self.buildQuery():
+                suffix = '.' + format
+                if '.' not in filename:
+                    filename += suffix
+
+                if filename is not None:
+                    csv = requests.get(self.query.replace('.csv', suffix)).text
+                    f = open(filename, 'w')
+                    f.write(csv)
+            else:
+                logging.error("Cannot create file. Query was none. Check that dataset is valid.")
+        else:
+            logging.error("Cannot create file. " + format + " is not a valid LaTiS format. Valid formats are: " + str(validFormats))
+            
 
     def clearProjections(self) -> None:
         """Clears the list of projections for the dataset."""
@@ -431,9 +494,21 @@ class Metadata:
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
-            variables = pd.read_json(q)['variable']
-            for i in range(len(variables)):
-                self.properties[variables[i]['id']] = variables[i]
+
+            queryCheck: dict = _checkQuery(q)
+
+            if queryCheck['valid']:
+                variables = pd.read_json(q)['variable']
+                for i in range(len(variables)):
+                    self.properties[variables[i]['id']] = variables[i]
+            else:
+                logging.error("Cannot populate metadata.\n" + queryCheck["errorText"])
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.properties = pd.read_json(q).iloc[1][0]
+
+            queryCheck: dict = _checkQuery(q)
+
+            if queryCheck['valid']:
+                self.properties = pd.read_json(q).iloc[1][0]
+            else:
+                logging.error("Cannot populate metadata.\n" + queryCheck["errorText"])
