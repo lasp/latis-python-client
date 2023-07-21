@@ -13,7 +13,7 @@ import urllib.parse
 
 from typing import List, Dict, Any, Union, Optional
 
-FORMAT = '[%(levelname)s: %(filename)s: %(funcName)s: %(lineno)d]: \n %(message)s \n'
+FORMAT = '[%(levelname)s at %(filename)s in %(funcName)s line %(lineno)d]: %(message)s'
 logging.basicConfig(format=FORMAT)
 
 def _datasetWillUseVersion3(baseUrl: str, dataset: str, preferVersion2: bool) -> bool:
@@ -63,18 +63,21 @@ def _checkQuery(query, expectTextError=True):
             Error is expected only via a status code if False.
 
     Returns:
-        bool: True if query has no errors, False otherwise.
+        (bool, str): 
+            First element True if query has no errors, False otherwise.
+            Second element contains any error info from LaTiS.
     """
 
+    errorText = ""
     r = requests.get(query)
     if r.status_code > 399: # Is an error and not just a nominal status code.
         if expectTextError:
-            logging.error("Query is invalid: " + query + "\r\n Got: " + r.text)
+            errorText = "    Query: " + query + " got:\n    " + "\n    ".join(x for x in r.text.strip().split("\n"))
         else:
-            logging.error("Query is invalid: " + query + " Got: " + str(r.status_code))
-        return False
+            errorText = "    Query: " + query + " got: " + str(r.status_code)
+        return {"valid": False, "errorText": errorText}
     else:
-        return True
+        return {"valid": True, "errorText": errorText}
 
 def data(baseUrl: str, dataset: str, returnType: str,
          projections: Optional[List[str]] = None,
@@ -222,7 +225,9 @@ class Catalog:
         self.list: np.ndarray[str, np.dtype[Any]]
 
         if latisInstance.latis3:
-            if _checkQuery(latisInstance.baseUrl, expectTextError=False):
+            queryCheck: dict = _checkQuery(latisInstance.baseUrl, expectTextError=False)
+
+            if queryCheck['valid']:
                 js = requests.get(latisInstance.baseUrl).json()
                 dataset = js['dataset']
                 titles = np.array([k['title'] for k in dataset])
@@ -230,18 +235,21 @@ class Catalog:
                 for i in range(len(self.list)):
                     self.datasets[titles[i]] = self.list[i]
             else:
-                logging.error("Cannot populate catalog. Query was None.")
+                logging.error("Cannot populate catalog.\n" + queryCheck["errorText"])
                 self.list = np.array([])
         else:
             q = latisInstance.baseUrl + 'catalog.csv'
-            if _checkQuery(q):
+
+            queryCheck: dict = _checkQuery(q)
+
+            if queryCheck['valid']:
                 df = pd.read_csv(q)
                 names = df['name']
                 self.list = df['accessURL'].to_numpy()
                 for i in range(len(self.list)):
                     self.datasets[names[i]] = self.list[i]
             else:
-                logging.error("Cannot populate catalog. Query was None.")
+                logging.error("Cannot populate catalog.\n" + queryCheck["errorText"])
                 self.list = np.array([])
 
     def search(self, searchTerm: str) -> "np.ndarray":
@@ -385,8 +393,11 @@ class Dataset:
         for o in self.operations:
             self.query = self.query + '&' + urllib.parse.quote(o)
 
-        if not _checkQuery(self.query):
+        queryCheck: dict = _checkQuery(self.query)
+
+        if not queryCheck['valid']:
             self.query = ""
+            logging.error("Cannot build query\n" + queryCheck["errorText"])
         
         return self.query
 
@@ -484,15 +495,21 @@ class Metadata:
 
         if latisInstance.latis3:
             q = latisInstance.baseUrl + dataset.name + '.meta'
-            if _checkQuery(q):
+
+            queryCheck: dict = _checkQuery(q)
+
+            if queryCheck['valid']:
                 variables = pd.read_json(q)['variable']
                 for i in range(len(variables)):
                     self.properties[variables[i]['id']] = variables[i]
             else:
-                logging.error("Cannot populate metadata. Query was None.")
+                logging.error("Cannot populate metadata.\n" + queryCheck["errorText"])
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            if _checkQuery(q):
+
+            queryCheck: dict = _checkQuery(q)
+
+            if queryCheck['valid']:
                 self.properties = pd.read_json(q).iloc[1][0]
             else:
-                logging.error("Cannot populate metadata. Query was None.")
+                logging.error("Cannot populate metadata.\n" + queryCheck["errorText"])
