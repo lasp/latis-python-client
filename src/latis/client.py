@@ -161,7 +161,6 @@ class LatisInstance:
     """
 
     def __init__(self, baseUrl: str, latis3: bool):
-
         self.baseUrl: str = baseUrl
         self.latis3: bool = latis3
         self._formatBaseUrl()
