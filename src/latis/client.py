@@ -5,11 +5,60 @@ This script provides functionality to retrieve the dataset in either numpy
 or pandas format, and optionally download the dataset to a file.
 """
 
+import io
 import numpy as np
 import pandas as pd
 import requests
 import urllib.parse
 from typing import List, Dict, Any, Union, Optional
+
+
+def read_data(base_url, dataset, start_time, end_time,
+              api_key=None, api_key_header="x-api-key"):
+    """
+    Make a request to a LaTiS instance for data.
+
+    Args:
+        base_url (str): The base URL of a LaTiS instance. The base URL
+          includes the host and the path through to ``/dap`` (for
+          LaTiS 2) or ``/dap2`` (for LaTiS 3).
+        dataset (str): The identifier of a dataset.
+        start_time (str): The start time of the request, ISO-8601
+          format.
+        end_time (str): The end time (exclusive) of the request,
+          ISO-8601 format.
+        api_key (str): If set, the API key sent with the request.
+        api_key_header (str): The HTTP header used to include the API
+          key given by ``api_key``.
+
+    Returns:
+        A Pandas DataFrame containing the results of the request.
+
+    Raises:
+        HTTPError: An error occurred while making the request.
+    """
+
+    url = "{base}/{dataset}.csv?time%3E={t0}&time%3C{t1}".format(
+        base=base_url.rstrip("/"),
+        dataset=dataset,
+        t0=start_time,
+        t1=end_time
+    )
+
+    headers = {}
+    if api_key is not None:
+        headers[api_key_header] = api_key
+
+    res = requests.get(url, headers=headers)
+
+    # If something went wrong, fail here.
+    res.raise_for_status()
+
+    # If we're still here, assume we got CSV and make a DataFrame.
+    csv = io.StringIO(res.text)
+    df = pd.read_csv(csv)
+
+    return df
 
 
 class LatisInstance:
