@@ -7,9 +7,11 @@ A client library for making LaTiS requests in Python.
 Installation
 ============
 
+We do not yet publish to PyPI so you need to install from Git:
+
 .. code:: bash
 
-    pip3 install -r requirements.txt
+    python3 -m pip install git+https://github.com/lasp/latis-python-client.git
 
 Usage
 =====
@@ -45,22 +47,3 @@ You can optionally specify an API key for instances that require one.
         "2026-01-02",
         api_key="<api key>"
     )
-
-Testing
-=======
-
-(Currently temporary until test code is rewritten)
-
-.. code:: bash
-
-    python3 latis-python-client/tests/example.py
-
-Development
-===========
-
-Use flake8 to lint python code.
-
-.. code:: bash
-
-    python3 -m flake8 .
-
