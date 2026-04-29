@@ -1,0 +1,13 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "latis-python-client"
+version = "0.0.0"
+dependencies = [
+  "matplotlib",
+  "numpy",
+  "pandas",
+  "requests"
+]
