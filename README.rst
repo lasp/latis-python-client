@@ -1,13 +1,8 @@
 ********
-`latis-python-client`_
+LaTiS Python Client
 ********
 
-|Latest Version|
-
-.. |Latest Version|
-   :target: https://pypi.org/
-
-latis-python-client streamlines latis operations in python.
+A client library for making LaTiS requests in Python.
 
 Installation
 ============
@@ -19,87 +14,37 @@ Installation
 Usage
 =====
 
-Create new latis instance.
+Use the ``read_data`` function to make a request to LaTiS and get the results as a Pandas ``DataFrame``.
+
+The ``read_data`` function expects the following arguments:
+
+* ``base_url``: The base URL of a LaTiS instance. The base URL includes the host and the path through ``/dap`` (for LaTiS 2) or ``/dap2`` (for LaTiS 3).
+* ``dataset``: The identifier of a dataset.
+* ``start_time``: The start time of the request, in ISO-8601 format.
+* ``end_time``: The end time (exclusive) of the request, in ISO-8601 format.
 
 .. code:: python
 
-    import latis
+    from latis.client import read_data
 
-    instance = latis.LatisInstance(
-         baseUrl='https://lasp.colorado.edu/lisird/latis',
-         latis3=False)
+    df = read_data(
+        "https://lasp.colorado.edu/lisird/latis/dap2",
+        "bremen_composite_mgii",
+        "2026-01-01",
+        "2026-01-02"
+    )
 
-    instance3 = latis.LatisInstance(
-         baseUrl='https://lasp.colorado.edu/lisird/latis',
-         latis3=True)
-
-Get catalog.
-
-.. code:: python
-
-    instance.catalog.search('cls')
-    
-    instance3.catalog.search('sorce')
-    
-    instance.catalog.datasets
-    
-    instance3.catalog.datasets
-
-Get datasets.
+You can optionally specify an API key for instances that require one.
 
 .. code:: python
 
-    clsRadioFluxF8 = instance.getDataset('cls_radio_flux_f8')
-    
-    clsRadioFluxF15 = instance.getDataset('cls_radio_flux_f15')
-    
-    sorceMGIndex = instance3.getDataset('sorce_mg_index')
-    
-Add selections/projections/operations.
-
-.. code:: python
-
-    clsRadioFluxF15.select('time<0')
-    
-    sorceMGIndex.select('time<2452705')
-    
-    clsRadioFluxF107.project(['time', 'absolute_f107']).select(start='1953', end='1954').select(target='absolute_f107', end='70').operate('formatTime(yyyy.MM.dd)')
-
-Order of additions does not matter:
-
-.. code:: python
-
-    clsRadioFluxF107.project(['time','absolute_f107']).operate('formatTime(yyyy.MM.dd)').select(target='absolute_f107', end='70').select(start='1953', end='1954')
-
-Get Metadata.
-
-.. code:: python
-
-    clsRadioFluxF15.metadata.properties
-    
-    clsRadioFluxF8.metadata.properties
-    
-    sorceMGIndex.metadata.properties
-
-Get Data.
-
-.. code:: python
-
-    pandasDF = clsRadioFluxF15.asNumpy()
-
-    numpy = clsRadioFluxF15.asNumpy()
-
-    mgData = sorceMGIndex.asPandas()
-
-Get File.
-
-.. code:: python
-
-    clsRadioFluxF15.getFile('cls_radio_flux_f15') # Creates csv format file with .csv suffix
-    
-    clsRadioFluxF15.getFile('cls_radio_flux_f15', 'txt') # Creates txt format file with .txt suffix
-    
-    clsRadioFluxF15.getFile('cls_radio_flux_f15.data') # Creates csv format file with .data suffix
+    df = read_data(
+        "https://lasp.colorado.edu/lisird/latis/dap2",
+        "bremen_composite_mgii",
+        "2026-01-01",
+        "2026-01-02",
+        api_key="<api key>"
+    )
 
 Testing
 =======
