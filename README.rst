@@ -47,3 +47,15 @@ You can optionally specify an API key for instances that require one.
         "2026-01-02",
         api_key="<api key>"
     )
+
+For queries more complicated than time selections, you can optionally specify an additional `DAP2 query fragment <https://lasp.colorado.edu/lisird/about/latis>`__ that will be appended to the query sent to LaTiS. It must be URL-encoded.
+
+.. code:: python
+
+    df = read_data(
+        "https://lasp.colorado.edu/lisird/latis/dap",
+        "nnl_hires_ssi_P1D",
+        "2025-01-01",
+        "2025-01-02",
+        query="wavelength%3E=400&wavelength%3C500&convert(time,days%20since%201858-11-17)&replace_missing(-99)"
+    )

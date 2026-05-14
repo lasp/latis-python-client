@@ -14,7 +14,7 @@ from typing import List, Dict, Any, Union, Optional
 
 
 def read_data(base_url, dataset, start_time, end_time,
-              api_key=None, api_key_header="x-api-key"):
+              api_key=None, api_key_header="x-api-key", query=None):
     """
     Make a request to a LaTiS instance for data.
 
@@ -30,6 +30,8 @@ def read_data(base_url, dataset, start_time, end_time,
         api_key (str): If set, the API key sent with the request.
         api_key_header (str): The HTTP header used to include the API
           key given by ``api_key``.
+        query (str): Optional additional OPeNDAP DAP2 query fragment.
+          Must be URL-encoded.
 
     Returns:
         A Pandas DataFrame containing the results of the request.
@@ -38,11 +40,12 @@ def read_data(base_url, dataset, start_time, end_time,
         HTTPError: An error occurred while making the request.
     """
 
-    url = "{base}/{dataset}.csv?time%3E={t0}&time%3C{t1}".format(
+    url = "{base}/{dataset}.csv?time%3E={t0}&time%3C{t1}{rest}".format(
         base=base_url.rstrip("/"),
         dataset=dataset,
         t0=start_time,
-        t1=end_time
+        t1=end_time,
+        rest="" if query is None else "&" + query
     )
 
     headers = {}
