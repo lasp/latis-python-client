@@ -22,7 +22,8 @@ def read_data(base_url, dataset, start_time, end_time,
         base_url (str): The base URL of a LaTiS instance. The base URL
           includes the host and the path through to ``/dap`` (for
           LaTiS 2) or ``/dap2`` (for LaTiS 3).
-        dataset (str): The identifier of a dataset.
+        dataset (str): One or more dataset identifiers. If given
+          multiple identifiers, the datasets will be joined.
         start_time (str): The start time of the request, ISO-8601
           format.
         end_time (str): The end time (exclusive) of the request,
@@ -38,11 +39,11 @@ def read_data(base_url, dataset, start_time, end_time,
 
     Raises:
         HTTPError: An error occurred while making the request.
+        TypeError: Dataset(s) not given with an acceptable type.
+        ValueError: LaTiS 2 instance used for join.
     """
 
-    url = "{base}/{dataset}.csv?time%3E={t0}&time%3C{t1}{rest}".format(
-        base=base_url.rstrip("/"),
-        dataset=dataset,
+    query = "time%3E={t0}&time%3C{t1}{rest}".format(
         t0=start_time,
         t1=end_time,
         rest="" if query is None else "&" + query
@@ -52,7 +53,37 @@ def read_data(base_url, dataset, start_time, end_time,
     if api_key is not None:
         headers[api_key_header] = api_key
 
-    res = requests.get(url, headers=headers)
+    # If dataset is a string, make a DAP2 query. If dataset is a list
+    # or a tuple, make a join query.
+    if isinstance(dataset, str):
+        res = _make_dap2_query(base_url, dataset, query, headers)
+    elif isinstance(dataset, (list, tuple)):
+        if len(dataset) == 1:
+            res = _make_dap2_query(base_url, dataset[0], query, headers)
+        else:
+            # Joining is only supported for LaTiS 3 instances. The
+            # only way we can check whether an instance is a LaTiS 3
+            # instance is to look for /dap2 and assume nobody changed
+            # the defaults.
+            if base_url.rstrip("/").endswith("/dap2"):
+                # Construct join service URL from base URL. Assumption
+                # is that we can replace /dap2 with /join.
+                #
+                # NOTE: rstrip removes any combination of these
+                # characters, so this will also handle a trailing
+                # slash.
+                join_url = base_url.rstrip("/dap2") + "/join"
+
+                res = _make_join_query(join_url, dataset, query, headers)
+            else:
+                # Probably not a LaTiS 3 instance.
+                raise ValueError(
+                    "Joining is only supported for LaTiS 3 instances"
+                )
+    else:
+        raise TypeError(
+            "dataset: expecting a string or list or tuple of strings"
+        )
 
     # If something went wrong, fail here.
     res.raise_for_status()
@@ -62,6 +93,33 @@ def read_data(base_url, dataset, start_time, end_time,
     df = pd.read_csv(csv)
 
     return df
+
+
+def _make_dap2_query(base, dataset, query, headers):
+    """
+    Makes a DAP 2 request to a LaTiS instance.
+    """
+
+    url = "{base}/{dataset}.csv?{query}".format(
+        base=base,
+        dataset=dataset,
+        query=query
+    )
+
+    res = requests.get(url, headers=headers)
+    return res
+
+
+def _make_join_query(base, datasets, query, headers):
+    """
+    Makes a request to the join service of a LaTiS 3 instance.
+    """
+
+    url = "{base}?{query}".format(base=base, query=query)
+    body = {"datasets": datasets}
+
+    res = requests.post(url, json=body, headers=headers)
+    return res
 
 
 class LatisInstance:

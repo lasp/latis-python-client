@@ -59,3 +59,14 @@ For queries more complicated than time selections, you can optionally specify an
         "2025-01-02",
         query="wavelength%3E=400&wavelength%3C500&convert(time,days%20since%201858-11-17)&replace_missing(-99)"
     )
+
+Multiple datasets can be joined by passing a list or tuple of dataset identifiers to ``read_data``. This is only supported by LaTiS 3 instances (those with URLs ending in ``/dap2``).
+
+.. code:: python
+
+    df = read_data(
+      "https://example.org/latis/dap2",
+      ["dataset1", "dataset2"],
+      "yyyy-mm-dd",
+      "yyyy-mm-dd"
+    )
