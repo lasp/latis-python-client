@@ -9,6 +9,7 @@ import io
 import numpy as np
 import pandas as pd
 import requests
+from requests.auth import AuthBase
 import urllib.parse
 from typing import List, Dict, Any, Union, Optional
 
@@ -49,17 +50,19 @@ def read_data(base_url, dataset, start_time, end_time,
         rest="" if query is None else "&" + query
     )
 
-    headers = {}
+    # No auth by default.
+    auth = None
+
     if api_key is not None:
-        headers[api_key_header] = api_key
+        auth = APIKeyAuth(api_key, api_key_header)
 
     # If dataset is a string, make a DAP2 query. If dataset is a list
     # or a tuple, make a join query.
     if isinstance(dataset, str):
-        res = _make_dap2_query(base_url, dataset, query, headers)
+        res = _make_dap2_query(base_url, dataset, query, auth)
     elif isinstance(dataset, (list, tuple)):
         if len(dataset) == 1:
-            res = _make_dap2_query(base_url, dataset[0], query, headers)
+            res = _make_dap2_query(base_url, dataset[0], query, auth)
         else:
             # Joining is only supported for LaTiS 3 instances. The
             # only way we can check whether an instance is a LaTiS 3
@@ -74,7 +77,7 @@ def read_data(base_url, dataset, start_time, end_time,
                 # slash.
                 join_url = base_url.rstrip("/dap2") + "/join"
 
-                res = _make_join_query(join_url, dataset, query, headers)
+                res = _make_join_query(join_url, dataset, query, auth)
             else:
                 # Probably not a LaTiS 3 instance.
                 raise ValueError(
@@ -95,7 +98,7 @@ def read_data(base_url, dataset, start_time, end_time,
     return df
 
 
-def _make_dap2_query(base, dataset, query, headers):
+def _make_dap2_query(base, dataset, query, auth):
     """
     Makes a DAP 2 request to a LaTiS instance.
     """
@@ -106,11 +109,11 @@ def _make_dap2_query(base, dataset, query, headers):
         query=query
     )
 
-    res = requests.get(url, headers=headers)
+    res = requests.get(url, auth=auth)
     return res
 
 
-def _make_join_query(base, datasets, query, headers):
+def _make_join_query(base, datasets, query, auth):
     """
     Makes a request to the join service of a LaTiS 3 instance.
     """
@@ -118,8 +121,31 @@ def _make_join_query(base, datasets, query, headers):
     url = "{base}?{query}".format(base=base, query=query)
     body = {"datasets": datasets}
 
-    res = requests.post(url, json=body, headers=headers)
+    res = requests.post(url, json=body, auth=auth)
     return res
+
+
+class APIKeyAuth(AuthBase):
+    """Authentication using an API key passed in an HTTP header."""
+
+    def __init__(self, key, header='x-api-key'):
+        """
+        Construct an APIKeyAuth instance.
+
+        Args:
+            key (str): The API key
+            header (str): The HTTP header used to pass the API key.
+              Defaults to ``x-api-key``.
+
+        Returns:
+            An APIKeyAuth instance.
+        """
+        self.key = key
+        self.header = header
+
+    def __call__(self, req):
+        req.headers[self.header] = self.key
+        return req
 
 
 class LatisInstance:
