@@ -36,7 +36,7 @@ The ``read_data`` function expects the following arguments:
         "2026-01-02"
     )
 
-You can optionally specify an API key for instances that require one.
+You can specify an API key for instances that require one.
 
 .. code:: python
 
