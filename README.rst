@@ -48,6 +48,19 @@ You can optionally specify an API key for instances that require one.
         api_key="<api key>"
     )
 
+You can specify a username and password for instances that require basic auth.
+
+.. code:: python
+
+   df = read_data(
+        "https://lasp.colorado.edu/lisird/latis/dap2",
+        "bremen_composite_mgii",
+        "2026-01-01",
+        "2026-01-02",
+        username="<username>",
+        password="<password>"
+    )
+
 For queries more complicated than time selections, you can optionally specify an additional `DAP2 query fragment <https://lasp.colorado.edu/lisird/about/latis>`__ that will be appended to the query sent to LaTiS. It must be URL-encoded.
 
 .. code:: python

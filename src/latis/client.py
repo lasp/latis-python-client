@@ -10,12 +10,14 @@ import numpy as np
 import pandas as pd
 import requests
 from requests.auth import AuthBase
+from requests.auth import HTTPBasicAuth
 import urllib.parse
 from typing import List, Dict, Any, Union, Optional
 
 
-def read_data(base_url, dataset, start_time, end_time,
-              api_key=None, api_key_header="x-api-key", query=None):
+def read_data(base_url, dataset, start_time, end_time, api_key=None,
+              api_key_header="x-api-key", username=None, password=None,
+              query=None):
     """
     Make a request to a LaTiS instance for data.
 
@@ -32,6 +34,10 @@ def read_data(base_url, dataset, start_time, end_time,
         api_key (str): If set, the API key sent with the request.
         api_key_header (str): The HTTP header used to include the API
           key given by ``api_key``.
+        username (str): If set, the username used for basic auth when
+          making the request.
+        password (str): If set, the password used for basic auth when
+          making the request.
         query (str): Optional additional OPeNDAP DAP2 query fragment.
           Must be URL-encoded.
 
@@ -55,6 +61,8 @@ def read_data(base_url, dataset, start_time, end_time,
 
     if api_key is not None:
         auth = APIKeyAuth(api_key, api_key_header)
+    elif username is not None and password is not None:
+        auth = HTTPBasicAuth(username, password)
 
     # If dataset is a string, make a DAP2 query. If dataset is a list
     # or a tuple, make a join query.
