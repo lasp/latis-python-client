@@ -482,4 +482,4 @@ class Metadata:
                 self.properties[variables[i]['id']] = variables[i]
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.properties = pd.read_json(q).iloc[1][0]
+            self.properties = pd.read_json(q).loc["metadata"]

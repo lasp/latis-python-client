@@ -120,5 +120,5 @@ def testCore():
     clsRadioFluxF15.getFile('cls_radio_flux_f15.data')
 
 
-testShortcuts()
+# testShortcuts()
 testCore()
