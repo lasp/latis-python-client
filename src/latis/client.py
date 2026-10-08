@@ -8,6 +8,7 @@ or pandas format, and optionally download the dataset to a file.
 import io
 import numpy as np
 import pandas as pd
+import xarray as xr
 import requests
 from requests.auth import AuthBase
 from requests.auth import HTTPBasicAuth
@@ -407,6 +408,17 @@ class Dataset:
         self.buildQuery()
         return pd.read_csv(self.query)
 
+    def asXarray(self) -> Union[xr.DataArray, None]:
+        """
+        Returns data from LaTiS API as xarray dataset.
+
+        Returns:
+            xarray.DataArray: Data as xarray dataset.
+        """
+
+        self.buildQuery()
+        return pd.read_csv(self.query).to_xarray()
+
     def asNumpy(self) -> Union[np.ndarray, None]:
         """
         Returns data from LaTiS API as numpy array.
@@ -482,4 +494,4 @@ class Metadata:
                 self.properties[variables[i]['id']] = variables[i]
         else:
             q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.properties = pd.read_json(q).iloc[1][0]
+            self.properties = pd.read_json(q).loc['metadata']
