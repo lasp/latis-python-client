@@ -25,7 +25,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
         base_url (str): The base URL of a LaTiS instance. The base URL
           includes the host and the path through to ``/dap`` (for
           LaTiS 2) or ``/dap2`` (for LaTiS 3).
-        dataset (str): One or more dataset identifiers. If given
+        dataset (str or tuple or list): One or more dataset identifiers. If given
           multiple identifiers, the datasets will be joined.
         start_time (str): The start time of the request, ISO-8601
           format.
@@ -75,11 +75,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
             if base_url.rstrip("/").endswith("/dap2"):
                 # Construct join service URL from base URL. Assumption
                 # is that we can replace /dap2 with /join.
-                #
-                # NOTE: rstrip removes any combination of these
-                # characters, so this will also handle a trailing
-                # slash.
-                join_url = base_url.rstrip("/dap2") + "/join"
+                join_url = base_url.rstrip("/").removesuffix("/dap2") + "/join"
 
                 res = _make_join_query(join_url, dataset, query, auth)
             else:
