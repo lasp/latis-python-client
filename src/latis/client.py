@@ -13,7 +13,7 @@ import requests
 from requests.auth import AuthBase
 from requests.auth import HTTPBasicAuth
 import urllib.parse
-from typing import List, Dict, Any, Union, Optional
+from typing import List, Any, Union, Optional
 
 
 def read_data(base_url, dataset, start_time, end_time, api_key=None,
@@ -26,7 +26,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
         base_url (str): The base URL of a LaTiS instance. The base URL
           includes the host and the path through to ``/dap`` (for
           LaTiS 2) or ``/dap2`` (for LaTiS 3).
-        dataset (str): One or more dataset identifiers. If given
+        dataset (str or tuple or list): One or more dataset identifiers. If given
           multiple identifiers, the datasets will be joined.
         start_time (str): The start time of the request, ISO-8601
           format.
@@ -52,11 +52,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
         ValueError: LaTiS 2 instance used for join.
     """
 
-    query = "time%3E={t0}&time%3C{t1}{rest}".format(
-        t0=start_time,
-        t1=end_time,
-        rest="" if query is None else "&" + query
-    )
+    query = f"time%3E={start_time}&time%3C{end_time}{'' if query is None else '&' + query}"
 
     # No auth by default.
     auth = None
@@ -81,11 +77,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
             if base_url.rstrip("/").endswith("/dap2"):
                 # Construct join service URL from base URL. Assumption
                 # is that we can replace /dap2 with /join.
-                #
-                # NOTE: rstrip removes any combination of these
-                # characters, so this will also handle a trailing
-                # slash.
-                join_url = base_url.rstrip("/dap2") + "/join"
+                join_url = base_url.rstrip("/").removesuffix("/dap2") + "/join"
 
                 res = _make_join_query(join_url, dataset, query, auth)
             else:
@@ -116,11 +108,7 @@ def _make_dap2_query(base, dataset, query, auth):
     Makes a DAP 2 request to a LaTiS instance.
     """
 
-    url = "{base}/{dataset}.csv?{query}".format(
-        base=base,
-        dataset=dataset,
-        query=query
-    )
+    url = f"{_joinUrl(base, dataset)}.csv?{query}"
 
     res = requests.get(url, auth=auth)
     return res
@@ -131,7 +119,7 @@ def _make_join_query(base, datasets, query, auth):
     Makes a request to the join service of a LaTiS 3 instance.
     """
 
-    url = "{base}?{query}".format(base=base, query=query)
+    url = f"{base}?{query}"
     body = {"datasets": datasets}
 
     res = requests.post(url, json=body, auth=auth)
@@ -208,14 +196,12 @@ class LatisInstance:
 
     def _formatBaseUrl(self) -> None:
         """
-        Appends dap2 or dap3 depending on LaTiS version.
+        Appends dap2 or dap depending on LaTiS version.
         """
-        if not self.baseUrl[-1] == '/':
-            self.baseUrl += '/'
         if self.latis3:
-            self.baseUrl += 'dap2/'
+            self.baseUrl = _joinUrl(self.baseUrl, "dap2")
         else:
-            self.baseUrl += 'dap/'
+            self.baseUrl = _joinUrl(self.baseUrl, "dap")
 
     def _getCatalog(self) -> "Catalog":
         return Catalog(self)
@@ -251,7 +237,7 @@ class Catalog:
             for i in range(len(self.list)):
                 self.datasets[titles[i]] = self.list[i]
         else:
-            q = latisInstance.baseUrl + 'catalog.csv'
+            q = _joinUrl(latisInstance.baseUrl, 'catalog.csv')
             df = pd.read_csv(q)
             names = df['name']
             self.list = df['accessURL'].to_numpy()
@@ -389,7 +375,7 @@ class Dataset:
             str: Query for the LaTiS API.
         """
 
-        self.query = self.latisInstance.baseUrl + self.name + '.csv?'
+        self.query = _joinUrl(self.latisInstance.baseUrl, self.name + '.csv?')
 
         self.query += ','.join(urllib.parse.quote(p) for p in self.projections)
 
@@ -492,10 +478,26 @@ class Metadata:
         self.properties: dict = {}
 
         if latisInstance.latis3:
-            q = latisInstance.baseUrl + dataset.name + '.meta'
+            q = _joinUrl(latisInstance.baseUrl, dataset.name + '.meta')
             variables = pd.read_json(q)['variable']
             for i in range(len(variables)):
                 self.properties[variables[i]['id']] = variables[i]
         else:
-            q = latisInstance.baseUrl + dataset.name + '.jsond?first()'
-            self.properties = pd.read_json(q).loc['metadata']
+            q = _joinUrl(latisInstance.baseUrl,dataset.name + '.jsond?first()')
+            self.properties = pd.read_json(q).loc["metadata"]
+
+
+def _joinUrl(baseUrl, *paths):
+    """
+    Joins and formats a base url with one or more paths.
+
+    Args:
+        baseUrl: The base url to join with.
+        *paths: One or more paths to join with.
+
+    Returns:
+        The joined url (with no trailing slash).
+    """
+    urlParts = [baseUrl.rstrip("/")]
+    urlParts.extend(path.strip("/") for path in paths)
+    return "/".join(urlParts)
