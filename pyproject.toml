@@ -7,7 +7,9 @@ name = "latis-python-client"
 version = "0.0.0"
 dependencies = [
   "matplotlib",
+  "netcdf4",
   "numpy",
   "pandas",
-  "requests"
+  "requests",
+  "xarray",
 ]

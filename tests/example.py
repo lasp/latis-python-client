@@ -113,6 +113,8 @@ def testCore():
     print(numpy)
     mgData = sorceMGIndex.asPandas()
     print(mgData)
+    mgDataArray = sorceMGIndex.asXarray()
+    print(mgDataArray)
 
     # 7 - Get file
     clsRadioFluxF15.getFile('cls_radio_flux_f15')

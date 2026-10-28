@@ -8,6 +8,7 @@ or pandas format, and optionally download the dataset to a file.
 import io
 import numpy as np
 import pandas as pd
+import xarray as xr
 import requests
 from requests.auth import AuthBase
 from requests.auth import HTTPBasicAuth
@@ -17,7 +18,7 @@ from typing import List, Any, Union, Optional
 
 def read_data(base_url, dataset, start_time, end_time, api_key=None,
               api_key_header="x-api-key", username=None, password=None,
-              query=None):
+              query=None, as_xarray=False):
     """
     Make a request to a LaTiS instance for data.
 
@@ -40,6 +41,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
           making the request.
         query (str): Optional additional OPeNDAP DAP2 query fragment.
           Must be URL-encoded.
+        as_xarray (bool): If True, return an xarray Dataset instead of a Pandas DataFrame.
 
     Returns:
         A Pandas DataFrame containing the results of the request.
@@ -93,9 +95,12 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
 
     # If we're still here, assume we got CSV and make a DataFrame.
     csv = io.StringIO(res.text)
-    df = pd.read_csv(csv)
+    rtn = pd.read_csv(csv)
 
-    return df
+    if as_xarray:
+        rtn = rtn.to_xarray()
+
+    return rtn
 
 
 def _make_dap2_query(base, dataset, query, auth):
@@ -392,6 +397,17 @@ class Dataset:
 
         self.buildQuery()
         return pd.read_csv(self.query)
+
+    def asXarray(self) -> Union[xr.DataArray, None]:
+        """
+        Returns data from LaTiS API as xarray dataset.
+
+        Returns:
+            xarray.DataArray: Data as xarray dataset.
+        """
+
+        self.buildQuery()
+        return pd.read_csv(self.query).to_xarray()
 
     def asNumpy(self) -> Union[np.ndarray, None]:
         """
