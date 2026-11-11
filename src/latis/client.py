@@ -6,21 +6,26 @@ or pandas format, and optionally download the dataset to a file.
 """
 
 import io
+import requests
 import numpy as np
 import pandas as pd
 import xarray as xr
-import requests
-from requests.auth import AuthBase
-from requests.auth import HTTPBasicAuth
 import urllib.parse
+
 from typing import List, Any, Union, Optional
+
+from latis.metadata import apply_metadata
+from requests import Response, get, post
+from requests.auth import AuthBase, HTTPBasicAuth
+
+from metadata import DatasetMetadata, VariableMetadata
 
 
 def read_data(base_url, dataset, start_time, end_time, api_key=None,
               api_key_header="x-api-key", username=None, password=None,
-              query=None, as_xarray=False):
+              query=None, as_xarray=False) -> pd.DataFrame | xr.Dataset:
     """
-    Make a request to a LaTiS instance for data.
+    Makes a request to a LaTiS instance for data.
 
     Args:
         base_url (str): The base URL of a LaTiS instance. The base URL
@@ -44,7 +49,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
         as_xarray (bool): If True, return an xarray Dataset instead of a Pandas DataFrame.
 
     Returns:
-        A Pandas DataFrame containing the results of the request.
+        A pandas DataFrame or xarray Dataset containing the results of the request.
 
     Raises:
         HTTPError: An error occurred while making the request.
@@ -99,31 +104,75 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
 
     if as_xarray:
         rtn = rtn.to_xarray()
+        # xarray.Dataset metadata is not yet implemented for join (multiple dataset) requests
+        if isinstance(dataset, str) or (isinstance(dataset, list) and len(dataset) == 1):
+            metadata = _make_dap2_metadata_query(base_url, dataset, auth)
+            rtn = apply_metadata(rtn, metadata)
 
     return rtn
 
 
-def _make_dap2_query(base, dataset, query, auth):
+def _make_dap2_query(base, dataset, query, auth) -> Response:
     """
-    Makes a DAP 2 request to a LaTiS instance.
+    Makes a DAP 2 request to a LaTiS instance for a single dataset.
+
+    Args:
+        base (str): The base URL of the LaTiS instance
+        dataset (str): A dataset identifier string
+        query (str): The query parameters string used to filter dataset results
+        auth (HTTPBasicAuth): An authentication object used to authenticate with the LaTiS server
+
+    Returns:
+        res (Response): The response from the LaTiS instance
     """
 
     url = f"{_joinUrl(base, dataset)}.csv?{query}"
 
-    res = requests.get(url, auth=auth)
+    res = get(url, auth=auth)
     return res
 
 
-def _make_join_query(base, datasets, query, auth):
+def _make_join_query(base, datasets, query, auth) -> Response:
     """
-    Makes a request to the join service of a LaTiS 3 instance.
+    Makes a request to the join service of a LaTiS 3 instance (multiple datasets).
+
+    Args:
+        base (str): The base URL of the LaTiS instance
+        datasets (list): A list of LaTiS 3 datasets
+        query (str): The query parameters string used to filter dataset results
+        auth (HTTPBasicAuth): An authentication object used to authenticate with the LaTiS server
+
+    Returns:
+        res (Response): The response from the LaTiS instance
     """
 
     url = f"{base}?{query}"
     body = {"datasets": datasets}
 
-    res = requests.post(url, json=body, auth=auth)
+    res = post(url, json=body, auth=auth)
     return res
+
+
+def _make_dap2_metadata_query(base, dataset, auth) -> DatasetMetadata:
+    """
+    Makes a DAP 2 metadata request to a LaTiS instance.
+
+    Args:
+        base (str): The base URL of the LaTiS instance
+        dataset (str): A dataset identifier string
+        auth (HTTPBasicAuth): An authentication object used to authenticate with the LaTiS server
+
+    Returns:
+        metadata_bundle (DatasetMetadata): Dataset metadata containing both dataset and variable-level metadata
+    """
+
+    url = f"{_joinUrl(base, dataset)}.meta"
+
+    res = get(url, auth=auth)
+    res.raise_for_status()
+
+    dataset_metadata = DatasetMetadata.model_validate_json(res.content)
+    return dataset_metadata
 
 
 class APIKeyAuth(AuthBase):
