@@ -37,16 +37,16 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
           format.
         end_time (str): The end time (exclusive) of the request,
           ISO-8601 format.
-        api_key (str): If set, the API key sent with the request.
-        api_key_header (str): The HTTP header used to include the API
-          key given by ``api_key``.
-        username (str): If set, the username used for basic auth when
+        api_key (str, optional): If set, the API key sent with the request.
+        api_key_header (str, optional): The HTTP header used to include the API
+          key given by ``api_key``. Defaults to ``x-api-key``.
+        username (str, optional): If set, the username used for basic auth when
           making the request.
-        password (str): If set, the password used for basic auth when
+        password (str, optional): If set, the password used for basic auth when
           making the request.
-        query (str): Optional additional OPeNDAP DAP2 query fragment.
+        query (str, optional): Optional additional OPeNDAP DAP2 query fragment.
           Must be URL-encoded.
-        as_xarray (bool): If True, return an xarray Dataset instead of a Pandas DataFrame.
+        as_xarray (bool, optional): If True, return an xarray Dataset instead of a Pandas DataFrame. Defaults to False.
 
     Returns:
         A pandas DataFrame or xarray Dataset containing the results of the request.
@@ -120,7 +120,7 @@ def _make_dap2_query(base, dataset, query, auth) -> Response:
         base (str): The base URL of the LaTiS instance
         dataset (str): A dataset identifier string
         query (str): The query parameters string used to filter dataset results
-        auth (HTTPBasicAuth): An authentication object used to authenticate with the LaTiS server
+        auth (HTTPBasicAuth, optional): An authentication object used to authenticate with the LaTiS server
 
     Returns:
         res (Response): The response from the LaTiS instance
@@ -140,7 +140,7 @@ def _make_join_query(base, datasets, query, auth) -> Response:
         base (str): The base URL of the LaTiS instance
         datasets (list): A list of LaTiS 3 datasets
         query (str): The query parameters string used to filter dataset results
-        auth (HTTPBasicAuth): An authentication object used to authenticate with the LaTiS server
+        auth (HTTPBasicAuth, optional): An authentication object used to authenticate with the LaTiS server
 
     Returns:
         res (Response): The response from the LaTiS instance
@@ -160,7 +160,7 @@ def _make_dap2_metadata_query(base, dataset, auth) -> DatasetMetadata:
     Args:
         base (str): The base URL of the LaTiS instance
         dataset (str): A dataset identifier string
-        auth (HTTPBasicAuth): An authentication object used to authenticate with the LaTiS server
+        auth (HTTPBasicAuth, optional): An authentication object used to authenticate with the LaTiS server
 
     Returns:
         metadata_bundle (DatasetMetadata): Dataset metadata containing both dataset and variable-level metadata

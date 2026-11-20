@@ -25,12 +25,24 @@ class DatasetMetadata(pydantic.BaseModel):
     model_config = pydantic.ConfigDict(extra="ignore")
     # Required metadata items
     id: str
+    title: str
     # Optional metadata items
+    description: str | None = None
     temporal_coverage: str | None = pydantic.Field(default=None, alias="temporalCoverage")
     variable: list[VariableMetadata]
 
 
 def apply_metadata(dataset: xr.Dataset, dataset_metadata: DatasetMetadata) -> xr.Dataset:
+    """
+    Applies metadata to a xarray dataset.
+
+    Args:
+        dataset: the xarray dataset to apply metadata to
+        dataset_metadata: the DatasetMetadata object to apply metadata from
+
+    Returns:
+        xarray.Dataset: a copy of the dataset with metadata applied to it
+    """
     # Check if any of the required metadata items are missing
     var_metadata = {var.id: var for var in dataset_metadata.variable}
     missing_metadata_items = set(dataset.data_vars) - set(var_metadata)
