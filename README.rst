@@ -83,3 +83,17 @@ Multiple datasets can be joined by passing a list or tuple of dataset identifier
       "yyyy-mm-dd",
       "yyyy-mm-dd"
     )
+
+Additionally, a dataset can be requested as a xarray Dataset object instead of a Pandas Dataframe:
+.. code:: python
+
+    df = read_data(
+      "https://example.org/latis/dap2",
+      "dataset1",
+      "yyyy-mm-dd",
+      "yyyy-mm-dd",
+      as_xarray=True
+    )
+
+The resulting Dataset object will contain metadata retrieved from the latis server as well. **Metadata is not yet
+implemented for join / multiple dataset requests**.
