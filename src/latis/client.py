@@ -65,10 +65,10 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
     # If dataset is a string, make a DAP2 query. If dataset is a list
     # or a tuple, make a join query.
     if isinstance(dataset, str):
-        res = _make_dap2_query(base_url, dataset, query, auth)
+        dataset_request_result = _make_dap2_query(base_url, dataset, query, auth)
     elif isinstance(dataset, (list, tuple)):
         if len(dataset) == 1:
-            res = _make_dap2_query(base_url, dataset[0], query, auth)
+            dataset_request_result = _make_dap2_query(base_url, dataset[0], query, auth)
         else:
             # Joining is only supported for LaTiS 3 instances. The
             # only way we can check whether an instance is a LaTiS 3
@@ -79,7 +79,7 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
                 # is that we can replace /dap2 with /join.
                 join_url = base_url.rstrip("/").removesuffix("/dap2") + "/join"
 
-                res = _make_join_query(join_url, dataset, query, auth)
+                dataset_request_result = _make_join_query(join_url, dataset, query, auth)
             else:
                 # Probably not a LaTiS 3 instance.
                 raise ValueError(
@@ -91,10 +91,10 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
         )
 
     # If something went wrong, fail here.
-    res.raise_for_status()
+    dataset_request_result.raise_for_status()
 
     # If we're still here, assume we got CSV and make a DataFrame.
-    csv = io.StringIO(res.text)
+    csv = io.StringIO(dataset_request_result.text)
     rtn = pd.read_csv(csv)
 
     if as_xarray:
@@ -103,15 +103,53 @@ def read_data(base_url, dataset, start_time, end_time, api_key=None,
     return rtn
 
 
+def read_catalog(base_url, depth=1, api_key=None, api_key_header="x-api-key", username=None, password=None):
+    """
+    Reads a LaTiS catalog from a LaTiS 3 instance at the provided base URL.
+
+    Args:
+        base_url (str): The base URL of the LaTiS instance
+        depth (int or None): The depth of the catalog to return, defaults to 1
+        api_key (str or None): If set, the API key to be used for making the request
+        api_key_header (str): The HTTP header used to pass the API key, defaults to 'x-api-key'
+        username (str or None): If set, the username to be used for making the request
+        password (str or None): If set, the password to be used for making the request
+
+    Returns:
+        A JSON object containing the catalog from the LaTiS 3 instance
+    """
+    # No auth by default.
+    auth = None
+
+    if api_key is not None:
+        auth = APIKeyAuth(api_key, api_key_header)
+    elif username is not None and password is not None:
+        auth = HTTPBasicAuth(username, password)
+
+    # Request catalog
+    if depth is None:
+        url = base_url
+    else:
+        url = base_url + "?depth=" + str(depth)
+
+    get_request = requests.get(url, auth=auth)
+    get_request.raise_for_status()
+
+    # Parse JSON catalog response
+    catalog_response = get_request.json()
+
+    return catalog_response
+
+
 def _make_dap2_query(base, dataset, query, auth):
     """
     Makes a DAP 2 request to a LaTiS instance.
     """
 
-    url = f"{_joinUrl(base, dataset)}.csv?{query}"
+    url = f"{_join_url(base, dataset)}.csv?{query}"
 
-    res = requests.get(url, auth=auth)
-    return res
+    dap2_query_result = requests.get(url, auth=auth)
+    return dap2_query_result
 
 
 def _make_join_query(base, datasets, query, auth):
@@ -122,8 +160,8 @@ def _make_join_query(base, datasets, query, auth):
     url = f"{base}?{query}"
     body = {"datasets": datasets}
 
-    res = requests.post(url, json=body, auth=auth)
-    return res
+    join_query_result = requests.post(url, json=body, auth=auth)
+    return join_query_result
 
 
 class APIKeyAuth(AuthBase):
@@ -144,9 +182,9 @@ class APIKeyAuth(AuthBase):
         self.key = key
         self.header = header
 
-    def __call__(self, req):
-        req.headers[self.header] = self.key
-        return req
+    def __call__(self, r):
+        r.headers[self.header] = self.key
+        return r
 
 
 class LatisInstance:
@@ -199,9 +237,9 @@ class LatisInstance:
         Appends dap2 or dap depending on LaTiS version.
         """
         if self.latis3:
-            self.baseUrl = _joinUrl(self.baseUrl, "dap2")
+            self.baseUrl = _join_url(self.baseUrl, "dap2")
         else:
-            self.baseUrl = _joinUrl(self.baseUrl, "dap")
+            self.baseUrl = _join_url(self.baseUrl, "dap")
 
     def _getCatalog(self) -> "Catalog":
         return Catalog(self)
@@ -237,7 +275,7 @@ class Catalog:
             for i in range(len(self.list)):
                 self.datasets[titles[i]] = self.list[i]
         else:
-            q = _joinUrl(latisInstance.baseUrl, 'catalog.csv')
+            q = _join_url(latisInstance.baseUrl, 'catalog.csv')
             df = pd.read_csv(q)
             names = df['name']
             self.list = df['accessURL'].to_numpy()
@@ -375,7 +413,7 @@ class Dataset:
             str: Query for the LaTiS API.
         """
 
-        self.query = _joinUrl(self.latisInstance.baseUrl, self.name + '.csv?')
+        self.query = _join_url(self.latisInstance.baseUrl, self.name + '.csv?')
 
         self.query += ','.join(urllib.parse.quote(p) for p in self.projections)
 
@@ -478,26 +516,26 @@ class Metadata:
         self.properties: dict = {}
 
         if latisInstance.latis3:
-            q = _joinUrl(latisInstance.baseUrl, dataset.name + '.meta')
+            q = _join_url(latisInstance.baseUrl, dataset.name + '.meta')
             variables = pd.read_json(q)['variable']
             for i in range(len(variables)):
                 self.properties[variables[i]['id']] = variables[i]
         else:
-            q = _joinUrl(latisInstance.baseUrl,dataset.name + '.jsond?first()')
+            q = _join_url(latisInstance.baseUrl, dataset.name + '.jsond?first()')
             self.properties = pd.read_json(q).loc["metadata"]
 
 
-def _joinUrl(baseUrl, *paths):
+def _join_url(base_url, *paths):
     """
     Joins and formats a base url with one or more paths.
 
     Args:
-        baseUrl: The base url to join with.
+        base_url: The base url to join with.
         *paths: One or more paths to join with.
 
     Returns:
         The joined url (with no trailing slash).
     """
-    urlParts = [baseUrl.rstrip("/")]
+    urlParts = [base_url.rstrip("/")]
     urlParts.extend(path.strip("/") for path in paths)
     return "/".join(urlParts)
